@@ -240,7 +240,7 @@ function normalize(){
 }
 function seed(){
  state.unit=1000000;state.config={editable:true};
- state.contractors=Array.from({length:10},(_,i)=>{const id='c'+(i+1);return{id,name:'Подрядчик '+(i+1),sourceMapping:contractorMapping(id),contracts:i===0?[makeContract('d1','ПС-250/24','Строительно-монтажные работы'),makeContract('d2','ПС-251/24','Дополнительные работы')]:[]}});
+ state.contractors=Array.from({length:3},(_,i)=>{const id='c'+(i+1);return{id,name:'Подрядчик '+(i+1),sourceMapping:contractorMapping(id),contracts:i===0?[makeContract('d1','ПС-250/24','Строительно-монтажные работы'),makeContract('d2','ПС-251/24','Дополнительные работы')]:[]}});
  const d=state.contractors[0].contracts[0];d.versions[0].id='v1';d.versions[0].name='Базовая 01.08.2026';d.versions.push(clone(d.versions[0]));d.versions[1].id='v2';d.versions[1].name='Текущая 22.09.2026';d.versions[1].drivers.revenue=d.versions[1].drivers.revenue.map((x,i)=>x*(i>5?1.06:1));
  state.currentContractor='c1';state.currentContract='d1';state.currentVersion='v2';normalize();
 }
