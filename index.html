@@ -49,7 +49,7 @@ const DEFAULT_MAPPING={
     "boq": {
       "enabled": true,
       "required": true,
-      "path": "data/sources/boq.xlsx",
+      "path": "data/contractors/{contractorId}/sources/boq.xlsx",
       "sheetAliases": ["BOQ", "Ведомость объемов", "Ведомость объёмов"],
       "headerRow": { "mode": "auto", "fallback": 9, "searchRows": 30 },
       "requiredFields": ["item_code", "item_name", "unit", "contract_quantity"],
@@ -71,7 +71,7 @@ const DEFAULT_MAPPING={
     "ksg": {
       "enabled": true,
       "required": true,
-      "path": "data/sources/ksg.xlsx",
+      "path": "data/contractors/{contractorId}/sources/volume-schedule.xlsx",
       "sheetAliases": ["КСГ", "Календарный график", "График производства"],
       "headerRow": { "mode": "auto", "fallback": 2, "searchRows": 20 },
       "dynamicColumns": { "mode": "dateHeaders", "grain": "month" },
@@ -93,7 +93,7 @@ const DEFAULT_MAPPING={
     "personnel": {
       "enabled": true,
       "required": true,
-      "path": "data/sources/personnel.xlsx",
+      "path": "data/contractors/{contractorId}/sources/personnel.xlsx",
       "sheetAliases": ["Персонал", "График персонала", "Ресурсный график персонала"],
       "headerRow": { "mode": "auto", "fallback": 4, "searchRows": 20 },
       "dynamicColumns": { "mode": "dateHeaders", "grain": "day" },
@@ -113,7 +113,7 @@ const DEFAULT_MAPPING={
     "equipment": {
       "enabled": true,
       "required": true,
-      "path": "data/sources/equipment.xlsx",
+      "path": "data/contractors/{contractorId}/sources/equipment.xlsx",
       "sheetAliases": ["Техника", "График техники", "Ресурсный график техники"],
       "headerRow": { "mode": "auto", "fallback": 4, "searchRows": 20 },
       "dynamicColumns": { "mode": "dateHeaders", "grain": "day" },
@@ -134,7 +134,7 @@ const DEFAULT_MAPPING={
     "primary_documents": {
       "enabled": true,
       "required": true,
-      "path": "data/sources/primary_documents.xlsx",
+      "path": "data/contractors/{contractorId}/sources/parameters.xlsx",
       "sheetAliases": ["Первичка в вал.контракта", "Первичка", "КС и первичные документы"],
       "headerRow": { "mode": "auto", "fallback": 1, "searchRows": 20 },
       "requiredFields": ["contractor", "contract_number", "currency", "document_number", "document_date", "amount_without_vat"],
@@ -164,7 +164,7 @@ const DEFAULT_MAPPING={
     "payments": {
       "enabled": true,
       "required": true,
-      "path": "data/sources/payments.xlsx",
+      "path": "data/contractors/{contractorId}/sources/payments.xlsx",
       "sheetAliases": ["Платежи", "Реестр платежей", "Фактические платежи"],
       "headerRow": { "mode": "auto", "fallback": 1, "searchRows": 20 },
       "requiredFields": ["payment_date", "contractor", "contract_number", "amount_without_vat"],
@@ -183,7 +183,7 @@ const DEFAULT_MAPPING={
     "factoring": {
       "enabled": true,
       "required": false,
-      "path": "data/sources/factoring.xlsx",
+      "path": "data/contractors/{contractorId}/sources/factoring.xlsx",
       "sheetAliases": ["Факторинг", "Реестр факторинга"],
       "headerRow": { "mode": "auto", "fallback": 1, "searchRows": 20 },
       "requiredFields": ["contractor", "contract_number", "document_number", "financed_amount"],
@@ -230,20 +230,21 @@ function contractor(){return state.contractors.find(x=>x.id===state.currentContr
 function contract(){return contractor()?.contracts.find(x=>x.id===state.currentContract)||contractor()?.contracts[0];}
 function version(){return contract()?.versions.find(x=>x.id===state.currentVersion)||contract()?.versions.at(-1);}
 function defaults(){return Object.fromEntries(COST_DEFS.map(x=>[x[2],{value:x[4],method:x[3],enabled:true,lag:0,cash:!['vacation','indirectVacation'].includes(x[2]),vat:!NO_VAT.has(x[2])}]))}
+function contractorMapping(contractorId){const mapping=clone(DEFAULT_MAPPING);for(const source of Object.values(mapping.sources||{}))source.path=String(source.path||'').replace('{contractorId}',contractorId);return mapping;}
 function normalize(){
  state.unit=[1,1000,1000000].includes(Number(state.unit))?Number(state.unit):1000000;
  state.config=state.config||{editable:true};
- for(const c of state.contractors){c.contracts=c.contracts||[];const migrateMapping=!c.sourceMapping;c.sourceMapping=c.sourceMapping||clone(DEFAULT_MAPPING);c.sourceMapping.sources=c.sourceMapping.sources||clone(DEFAULT_MAPPING.sources);for(const d of c.contracts){d.sources=d.sources||{};d.sourceProfiles=d.sourceProfiles||{};if(migrateMapping)for(const [k,p] of Object.entries(d.sourceProfiles))if(p&&Object.keys(p).length)c.sourceMapping.sources[k]={...c.sourceMapping.sources[k],...clone(p)};d.parameters={...defaults(),...d.parameters};d.year=d.year||2026;d.vatRate=d.vatRate??22;d.vacationBasis=d.vacationBasis||'annual';
+ for(const c of state.contractors){c.contracts=c.contracts||[];const migrateMapping=!c.sourceMapping;c.sourceMapping=c.sourceMapping||contractorMapping(c.id);c.sourceMapping.sources=c.sourceMapping.sources||contractorMapping(c.id).sources;for(const d of c.contracts){d.sources=d.sources||{};d.sourceProfiles=d.sourceProfiles||{};if(migrateMapping)for(const [k,p] of Object.entries(d.sourceProfiles))if(p&&Object.keys(p).length)c.sourceMapping.sources[k]={...c.sourceMapping.sources[k],...clone(p)};d.parameters={...defaults(),...d.parameters};d.year=d.year||2026;d.vatRate=d.vatRate??22;d.vacationBasis=d.vacationBasis||'annual';
  for(const v of d.versions){v.parameters=clone(v.parameters||d.parameters);for(const x of COST_DEFS)v.parameters[x[2]]={...defaults()[x[2]],...v.parameters[x[2]]};v.year=v.year||d.year;v.vatRate=v.vatRate??d.vatRate;v.vacationBasis=v.vacationBasis||d.vacationBasis;v.bindings=v.bindings||{};v.manualCosts=v.manualCosts||{};v.manualPayments=v.manualPayments||{};v.drivers=v.drivers||{};for(const [k] of SERIES)v.drivers[k]=Array.from({length:12},(_,m)=>Number(v.drivers[k]?.[m])||0);v.dataMode=v.dataMode||'demo';}
  }}
 }
 function seed(){
  state.unit=1000000;state.config={editable:true};
- state.contractors=Array.from({length:10},(_,i)=>({id:'c'+(i+1),name:'Подрядчик '+(i+1),sourceMapping:clone(DEFAULT_MAPPING),contracts:i===0?[makeContract('d1','ПС-250/24','Строительно-монтажные работы'),makeContract('d2','ПС-251/24','Дополнительные работы')]:[]}));
+ state.contractors=Array.from({length:10},(_,i)=>{const id='c'+(i+1);return{id,name:'Подрядчик '+(i+1),sourceMapping:contractorMapping(id),contracts:i===0?[makeContract('d1','ПС-250/24','Строительно-монтажные работы'),makeContract('d2','ПС-251/24','Дополнительные работы')]:[]}});
  const d=state.contractors[0].contracts[0];d.versions[0].id='v1';d.versions[0].name='Базовая 01.08.2026';d.versions.push(clone(d.versions[0]));d.versions[1].id='v2';d.versions[1].name='Текущая 22.09.2026';d.versions[1].drivers.revenue=d.versions[1].drivers.revenue.map((x,i)=>x*(i>5?1.06:1));
  state.currentContractor='c1';state.currentContract='d1';state.currentVersion='v2';normalize();
 }
-function configuredUrl(){return new URLSearchParams(location.search).get('config')||'config.json';}
+function configuredUrl(){return new URLSearchParams(location.search).get('config')||'config/config.json';}
 function configSnapshot(){return {application:APP,schemaVersion:4,revision:state.revision||'initial',savedAt:new Date().toISOString(),unit:state.unit,contractors:state.contractors.map(c=>({id:c.id,name:c.name,fileUrl:c.fileUrl||''})),config:{editable:state.config?.editable!==false}};}
 function validateContractorFile(o){if(!o||o.application!==APP||o.fileType!=='contractor'||o.schemaVersion!==1||!o.contractor)throw Error('Файл не является файлом подрядчика модели.');const c=o.contractor;if(typeof c.id!=='string'||typeof c.name!=='string'||!Array.isArray(c.contracts))throw Error('Некорректные данные подрядчика.');return clone(c);}
 function validateConfig(o){
@@ -408,10 +409,10 @@ function xesc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
 function sheetXml(rows){const cells=rows.map((row,ri)=>`<row r="${ri+1}">${row.map((v,ci)=>{const ref=columnName(ci)+(ri+1);return typeof v==='number'&&Number.isFinite(v)?`<c r="${ref}"><v>${v}</v></c>`:`<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${xesc(v)}</t></is></c>`;}).join('')}</row>`).join('');return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${cells}</sheetData></worksheet>`;}
 function contractorWorkbook(c){const snapshot={application:APP,fileType:'contractor',schemaVersion:1,savedAt:new Date().toISOString(),contractor:clone(c)};delete snapshot.contractor.fileUrl;const summary=[['Файл подрядчика финансово-экономической модели'],['Подрядчик',c.name],['Идентификатор',c.id],['Сформирован',snapshot.savedAt],[],['Договор','Наименование','Версий'],...c.contracts.map(d=>[d.number,d.name,d.versions.length])],parameters=[['Договор','Версия','Статья','Группа','Ставка','Метод','Оплата, мес.','В экономике','Выплачивать','С НДС']],model=[['Договор','Версия','Показатель',...MONTHS]];for(const d of c.contracts)for(const v of d.versions){for(const x of COST_DEFS){const p=v.parameters[x[2]]||{};parameters.push([d.number,v.name,x[1],x[0]==='direct'?'Прямые':'Косвенные',p.value??'',p.method??'',p.lag??0,p.enabled!==false,p.cash!==false,p.vat!==false]);}for(const [k,label] of SERIES)model.push([d.number,v.name,label,...(v.drivers[k]||Array(12).fill(0))]);}const raw=JSON.stringify(snapshot),chunks=[];for(let i=0;i<raw.length;i+=30000)chunks.push([raw.slice(i,i+30000)]);const sheets=[['Сводка',summary,false],['Параметры',parameters,false],['Модель',model,false],['_DATA',[['Служебные данные приложения'],...chunks],true]],files={'[Content_Types].xml':`<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${sheets.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`,'_rels/.rels':`<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`,'xl/workbook.xml':`<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheets.map((s,i)=>`<sheet name="${xesc(s[0])}" sheetId="${i+1}" r:id="rId${i+1}"${s[2]?' state="hidden"':''}/>`).join('')}</sheets></workbook>`,'xl/_rels/workbook.xml.rels':`<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')}</Relationships>`};sheets.forEach((s,i)=>files[`xl/worksheets/sheet${i+1}.xml`]=sheetXml(s[1]));return zipStored(files);}
 function downloadBlob(name,blob){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-function exportContractor(){const c=contractor();if(!c)return;downloadBlob((c.name||c.id).replace(/[^\p{L}\p{N}._-]+/gu,'_')+'.xlsx',contractorWorkbook(c));dirty=false;persist();notify('Excel-файл подрядчика сформирован. Сохраните его в SharePoint и укажите прямую ссылку в общей конфигурации.');}
+function exportContractor(){const c=contractor();if(!c)return;const date=new Date().toISOString().slice(0,10),name=(c.name||c.id).replace(/[^\p{L}\p{N}._-]+/gu,'_')+'_model_'+date+'.xlsx';downloadBlob(name,contractorWorkbook(c));dirty=false;persist();notify('Версия модели подрядчика сформирована с датой '+date+'. Сохраните её в папке подрядчика и укажите прямую ссылку в общей конфигурации.');}
 
 const configUrlWrap=document.createElement('div');configUrlWrap.className='wide';configUrlWrap.innerHTML='<h3>Общий config.json</h3><p class="sub">Административные настройки, перечень подрядчиков и пути к их файлам. Данные отдельных подрядчиков в общий конфиг не входят.</p><label for="configUrlInput">Ссылка на config.json в репозитории или на портале</label><div class="actions"><input id="configUrlInput" type="url" style="min-width:min(620px,100%);flex:1" placeholder="https://…/config.json"><button class="btn" id="applyConfigUrl" type="button">Применить ссылку</button></div><p class="sub">После обновления страницы общие настройки загружаются только по этой ссылке. Рабочие изменения в памяти браузера не сохраняются.</p><div class="actions"><a class="btn" id="openGlobalConfig" target="_blank" rel="noopener noreferrer">Открыть config.json</a><button class="btn" id="reloadPortal" type="button">Прочитать конфиг</button><button class="btn primary" id="adminExportConfig" type="button">Скачать config.json</button><span id="saveStatus" class="sub"></span></div>';$('globalConfigSettings').append(configUrlWrap);$('configUrlInput').value=configuredUrl();$('adminExportConfig').onclick=exportConfig;
-$('applyConfigUrl').onclick=()=>{if(!requireEdit())return;const raw=$('configUrlInput').value.trim();if(!raw){notify('Укажите ссылку на config.json.');return;}let resolved;try{resolved=new URL(raw,location.href);if(!['http:','https:'].includes(resolved.protocol))throw Error();}catch(e){notify('Укажите корректную HTTP(S)-ссылку или относительный путь.');return;}const url=new URL(location.href);if(resolved.href===new URL('config.json',location.href).href)url.searchParams.delete('config');else url.searchParams.set('config',resolved.href);history.replaceState(null,'',url);notify('Ссылка применена. Загружаю конфигурацию заново.');location.reload();};
+$('applyConfigUrl').onclick=()=>{if(!requireEdit())return;const raw=$('configUrlInput').value.trim();if(!raw){notify('Укажите ссылку на config.json.');return;}let resolved;try{resolved=new URL(raw,location.href);if(!['http:','https:'].includes(resolved.protocol))throw Error();}catch(e){notify('Укажите корректную HTTP(S)-ссылку или относительный путь.');return;}const url=new URL(location.href);if(resolved.href===new URL('config/config.json',location.href).href)url.searchParams.delete('config');else url.searchParams.set('config',resolved.href);history.replaceState(null,'',url);notify('Ссылка применена. Загружаю конфигурацию заново.');location.reload();};
 $('editMode').onchange=e=>{const was=editMode;editMode=e.target.checked;document.body.classList.toggle('edit-mode',editMode);if(!editMode&&activeTab==='administration'){activeTab='summary';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='summary'));}render();if($('sourceModal').classList.contains('show'))renderSourceEditor();if(was&&!editMode&&dirty)exportContractor();};
 $('exportConfigButton').onclick=exportConfig;$('exportContractorButton').onclick=exportContractor;$('importConfigButton').onclick=()=>{if(requireEdit())$('configFile').click();};
 $('configFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>20e6)throw Error('Конфиг больше 20 МБ.');const incoming=validateConfig(JSON.parse(await file.text()));if(!confirm('Загрузить общий конфиг и заменить открытый перечень подрядчиков?'))return;await applyConfig(incoming);persist();render();notify('Общий конфиг и доступные файлы подрядчиков загружены.');}catch(err){notify('Конфигурация не изменена: '+err.message);}finally{e.target.value='';}};
@@ -429,7 +430,7 @@ $('compareVersion').onchange=renderComparison;$('collapseGroups').onclick=render
 $('addContractButton').onclick=()=>{if(!requireEdit())return;$('newContractor').innerHTML=state.contractors.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('');$('newContractor').value=state.currentContractor;$('contractModal').classList.add('show');$('newContractNumber').focus();};
 $('addContractorButton').textContent='Добавить';
 const renameContractorButton=document.createElement('button');renameContractorButton.className='btn';renameContractorButton.id='renameContractorButton';renameContractorButton.textContent='Изменить';$('addContractorButton').after(renameContractorButton);
-$('addContractorButton').onclick=()=>{if(!requireEdit())return;if(state.contractors.length>=100){notify('Можно создать не более 100 подрядчиков.');return;}const name=prompt('Наименование нового подрядчика:','Новый подрядчик');if(name===null)return;const clean=name.trim();if(!clean){notify('Укажите наименование подрядчика.');return;}if(state.contractors.some(x=>x.name.toLocaleLowerCase('ru-RU')===clean.toLocaleLowerCase('ru-RU'))){notify('Подрядчик с таким наименованием уже существует.');return;}const c={id:uid('c'),name:clean,contracts:[]};state.contractors.push(c);state.currentContractor=c.id;state.currentContract='';state.currentVersion='';persist(true);render();notify('Подрядчик добавлен. При завершении редактирования будет скачан актуальный config.json.');};
+$('addContractorButton').onclick=()=>{if(!requireEdit())return;if(state.contractors.length>=100){notify('Можно создать не более 100 подрядчиков.');return;}const name=prompt('Наименование нового подрядчика:','Новый подрядчик');if(name===null)return;const clean=name.trim();if(!clean){notify('Укажите наименование подрядчика.');return;}if(state.contractors.some(x=>x.name.toLocaleLowerCase('ru-RU')===clean.toLocaleLowerCase('ru-RU'))){notify('Подрядчик с таким наименованием уже существует.');return;}const id=uid('c'),c={id,name:clean,sourceMapping:contractorMapping(id),contracts:[]};state.contractors.push(c);state.currentContractor=c.id;state.currentContract='';state.currentVersion='';persist(true);render();notify('Подрядчик добавлен. При завершении редактирования будет скачан актуальный config.json.');};
 $('renameContractorButton').onclick=()=>{if(!requireEdit())return;const c=contractor();if(!c)return;const name=prompt('Новое наименование подрядчика:',c.name);if(name===null)return;const clean=name.trim();if(!clean){notify('Укажите наименование подрядчика.');return;}if(state.contractors.some(x=>x.id!==c.id&&x.name.toLocaleLowerCase('ru-RU')===clean.toLocaleLowerCase('ru-RU'))){notify('Подрядчик с таким наименованием уже существует.');return;}c.name=clean;persist(true);render();notify('Наименование подрядчика изменено. При завершении редактирования будет скачан актуальный config.json.');};
 $('deleteContractorButton').onclick=()=>{if(!requireEdit())return;const c=contractor();if(!c)return;if(state.contractors.length===1){notify('Нельзя удалить единственного подрядчика.');return;}if(!confirm(`Удалить подрядчика «${c.name}» и все его договоры, версии и настройки?`))return;state.contractors=state.contractors.filter(x=>x.id!==c.id);state.currentContractor=state.contractors[0].id;state.currentContract='';state.currentVersion='';persist(true);render();notify('Подрядчик удалён. При завершении редактирования будет скачан актуальный config.json.');};
 $('contractForm').onsubmit=e=>{e.preventDefault();if(!requireEdit())return;const c=state.contractors.find(x=>x.id===$('newContractor').value),number=$('newContractNumber').value.trim(),name=$('newContractName').value.trim();if(!number||!name)return;if(c.contracts.some(x=>x.number===number)){notify('У подрядчика уже есть договор с таким номером.');return;}const d=makeContract(uid('d'),number,name);for(const [key] of SERIES)d.versions[0].drivers[key]=Array(12).fill(0);d.versions[0].dataMode='manual';d.parameters=clone(c.contracts[0]?.versions.at(-1)?.parameters||defaults());c.contracts.push(d);state.currentContractor=c.id;state.currentContract=d.id;state.currentVersion=d.versions[0].id;normalize();$('contractModal').classList.remove('show');$('contractForm').reset();persist(true);render();};
