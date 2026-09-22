@@ -13,7 +13,7 @@
     "boq": {
       "enabled": true,
       "required": true,
-      "path": "data/sources/boq.xlsx",
+      "path": "data/contractors/{contractorId}/sources/boq.xlsx",
       "sheetAliases": ["BOQ", "Ведомость объемов", "Ведомость объёмов"],
       "headerRow": { "mode": "auto", "fallback": 9, "searchRows": 30 },
       "requiredFields": ["item_code", "item_name", "unit", "contract_quantity"],
@@ -35,7 +35,7 @@
     "ksg": {
       "enabled": true,
       "required": true,
-      "path": "data/sources/ksg.xlsx",
+      "path": "data/contractors/{contractorId}/sources/volume-schedule.xlsx",
       "sheetAliases": ["КСГ", "Календарный график", "График производства"],
       "headerRow": { "mode": "auto", "fallback": 2, "searchRows": 20 },
       "dynamicColumns": { "mode": "dateHeaders", "grain": "month" },
@@ -57,7 +57,7 @@
     "personnel": {
       "enabled": true,
       "required": true,
-      "path": "data/sources/personnel.xlsx",
+      "path": "data/contractors/{contractorId}/sources/personnel.xlsx",
       "sheetAliases": ["Персонал", "График персонала", "Ресурсный график персонала"],
       "headerRow": { "mode": "auto", "fallback": 4, "searchRows": 20 },
       "dynamicColumns": { "mode": "dateHeaders", "grain": "day" },
@@ -77,7 +77,7 @@
     "equipment": {
       "enabled": true,
       "required": true,
-      "path": "data/sources/equipment.xlsx",
+      "path": "data/contractors/{contractorId}/sources/equipment.xlsx",
       "sheetAliases": ["Техника", "График техники", "Ресурсный график техники"],
       "headerRow": { "mode": "auto", "fallback": 4, "searchRows": 20 },
       "dynamicColumns": { "mode": "dateHeaders", "grain": "day" },
@@ -98,7 +98,7 @@
     "primary_documents": {
       "enabled": true,
       "required": true,
-      "path": "data/sources/primary_documents.xlsx",
+      "path": "data/contractors/{contractorId}/sources/parameters.xlsx",
       "sheetAliases": ["Первичка в вал.контракта", "Первичка", "КС и первичные документы"],
       "headerRow": { "mode": "auto", "fallback": 1, "searchRows": 20 },
       "requiredFields": ["contractor", "contract_number", "currency", "document_number", "document_date", "amount_without_vat"],
@@ -128,7 +128,7 @@
     "payments": {
       "enabled": true,
       "required": true,
-      "path": "data/sources/payments.xlsx",
+      "path": "data/contractors/{contractorId}/sources/payments.xlsx",
       "sheetAliases": ["Платежи", "Реестр платежей", "Фактические платежи"],
       "headerRow": { "mode": "auto", "fallback": 1, "searchRows": 20 },
       "requiredFields": ["payment_date", "contractor", "contract_number", "amount_without_vat"],
@@ -147,7 +147,7 @@
     "factoring": {
       "enabled": true,
       "required": false,
-      "path": "data/sources/factoring.xlsx",
+      "path": "data/contractors/{contractorId}/sources/factoring.xlsx",
       "sheetAliases": ["Факторинг", "Реестр факторинга"],
       "headerRow": { "mode": "auto", "fallback": 1, "searchRows": 20 },
       "requiredFields": ["contractor", "contract_number", "document_number", "financed_amount"],
