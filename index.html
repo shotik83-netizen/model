@@ -307,7 +307,11 @@ function render(){
 }
 function renderSummary(){const r=state.results,rev=sum(r.revenue),cost=sum(r.costs),profit=sum(r.profit),margin=rev?profit/rev*100:0,cash=r.cumulative.at(-1);
  $('kpis').innerHTML=[['Доходы без НДС',fmt(rev),'Работы и прочие доходы'],['Расходы без НДС',fmt(cost),'Прямые и косвенные'],['Маржа',pct(margin),'Результат: '+fmt(profit)],['Накопленный поток',fmt(cash),'На конец года']].map((x,i)=>`<div class="card kpi"><span>${x[0]}</span><strong class="${i===3&&cash<0?'negative':''}">${x[1]}</strong><small class="sub">${x[2]}</small></div>`).join('');
- $('summaryTable').innerHTML=makeTable([['Доходы',r.revenue],['Расходы',r.costs],['Финансовый результат',r.profit,true],['Чистый поток',r.ncf],['Поток накопительно',r.cumulative,true,'last']]);
+ const summaryBase=makeTable([['Доходы',r.revenue],['Расходы',r.costs],['Финансовый результат',r.profit,true],['Чистый поток',r.ncf],['Поток накопительно',r.cumulative,true,'last']]);
+ const incomeRows=[['Доходы от работ',version().drivers.revenue],['Прочие доходы',version().drivers.otherRevenue],['Доходы итого',r.revenue,true]];
+ const directRows=COST_DEFS.filter(x=>x[0]==='direct').map(x=>[x[1],r.rows[x[2]]]).concat([['Прямые расходы итого',r.direct,true]]);
+ const indirectRows=COST_DEFS.filter(x=>x[0]==='indirect').map(x=>[x[1],r.rows[x[2]]]).concat([['Косвенные расходы итого',r.indirect,true]]);
+ $('summaryTable').innerHTML=summaryBase+'<div class="group-content"><p class="sub">Раскройте статью для просмотра состава. Итоги детализации совпадают со строками сводки.</p>'+detail('summaryIncome','Доходы — детализация',incomeRows)+detail('summaryDirect','Прямые расходы — детализация',directRows)+detail('summaryIndirect','Косвенные расходы — детализация',indirectRows)+'</div>';
  $('managerChecks').innerHTML=`<div class="check"><span class="dot">✓</span><div><b>Экономика и выплаты</b><div class="sub">Начисления и сроки оплаты разделены</div></div></div><div class="check"><span class="dot">✓</span><div><b>Резерв отпусков</b><div class="sub">База: ${version().vacationBasis==='annual'?'годовой':'месячный'} ФОТ. Резерв не выплачивается автоматически.</div></div></div>`;
  $('problems').innerHTML=(Math.min(...r.cumulative)<0?`<div class="problem"><b>Потребность в финансировании</b><div class="sub">${fmt(-Math.min(...r.cumulative))}</div></div>`:'')+(r.deferred?`<div class="note space">Выплаты после ${version().year}: ${fmt(r.deferred)}</div>`:'');
 }
