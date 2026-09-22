@@ -1,0 +1,2360 @@
+{
+  "application": "financial-economic-model",
+  "schemaVersion": 3,
+  "revision": "model-3-20260922",
+  "savedAt": "2026-09-22T15:41:01.556Z",
+  "unit": 1000000,
+  "currentContractor": "c1",
+  "currentContract": "d1",
+  "currentVersion": "v2",
+  "contractors": [
+    {
+      "id": "c1",
+      "name": "Подрядчик 1",
+      "contracts": [
+        {
+          "id": "d1",
+          "number": "ПС-250/24",
+          "name": "Строительно-монтажные работы",
+          "currency": "RUB",
+          "fx": 1,
+          "vatRate": 22,
+          "parameters": {
+            "payroll": {
+              "value": 150000,
+              "enabled": true,
+              "method": "monthly"
+            },
+            "payrollTax": {
+              "value": 13,
+              "enabled": true,
+              "method": "rate"
+            },
+            "insurance": {
+              "value": 30.9,
+              "enabled": true,
+              "method": "rate"
+            },
+            "vacation": {
+              "value": 8,
+              "enabled": true,
+              "method": "rate"
+            },
+            "subcontract": {
+              "value": 0,
+              "enabled": true,
+              "method": "percentRevenue"
+            },
+            "equipment": {
+              "value": 5000,
+              "enabled": true,
+              "method": "unit"
+            },
+            "scaffolding": {
+              "value": 0,
+              "enabled": true,
+              "method": "manual"
+            },
+            "scaffoldLabor": {
+              "value": 1500,
+              "enabled": true,
+              "method": "unit"
+            },
+            "projectMaterials": {
+              "value": 100,
+              "enabled": true,
+              "method": "materials"
+            },
+            "consumables": {
+              "value": 10,
+              "enabled": true,
+              "method": "percentPayroll"
+            },
+            "nrk": {
+              "value": 4000,
+              "enabled": true,
+              "method": "unit"
+            },
+            "otherDirect": {
+              "value": 0,
+              "enabled": true,
+              "method": "manual"
+            },
+            "indirectPayroll": {
+              "value": 180000,
+              "enabled": true,
+              "method": "monthly"
+            },
+            "indirectTax": {
+              "value": 13,
+              "enabled": true,
+              "method": "rate"
+            },
+            "indirectInsurance": {
+              "value": 30.9,
+              "enabled": true,
+              "method": "rate"
+            },
+            "indirectVacation": {
+              "value": 8,
+              "enabled": true,
+              "method": "rate"
+            },
+            "food": {
+              "value": 650,
+              "enabled": true,
+              "method": "day"
+            },
+            "housing": {
+              "value": 500,
+              "enabled": true,
+              "method": "day"
+            },
+            "bus": {
+              "value": 639344,
+              "enabled": true,
+              "method": "unit"
+            },
+            "car": {
+              "value": 319672,
+              "enabled": true,
+              "method": "unit"
+            },
+            "formwork": {
+              "value": 0,
+              "enabled": true,
+              "method": "manual"
+            },
+            "ppe": {
+              "value": 30000,
+              "enabled": true,
+              "method": "annualPerPerson"
+            },
+            "tickets": {
+              "value": 40000,
+              "enabled": true,
+              "method": "rotation"
+            },
+            "permit": {
+              "value": 8000,
+              "enabled": true,
+              "method": "perPerson"
+            },
+            "medical": {
+              "value": 3000,
+              "enabled": true,
+              "method": "perPerson"
+            },
+            "vziz": {
+              "value": 20000,
+              "enabled": true,
+              "method": "annualPerPerson"
+            },
+            "office": {
+              "value": 300000,
+              "enabled": true,
+              "method": "monthly"
+            },
+            "warehouse": {
+              "value": 800000,
+              "enabled": true,
+              "method": "monthly"
+            },
+            "internet": {
+              "value": 0,
+              "enabled": true,
+              "method": "monthly"
+            },
+            "waste": {
+              "value": 0,
+              "enabled": true,
+              "method": "monthly"
+            },
+            "safety": {
+              "value": 1,
+              "enabled": true,
+              "method": "percentPayroll"
+            },
+            "accident": {
+              "value": 5000,
+              "enabled": true,
+              "method": "annualPerPerson"
+            },
+            "it": {
+              "value": 0,
+              "enabled": true,
+              "method": "manual"
+            },
+            "containers": {
+              "value": 0,
+              "enabled": true,
+              "method": "manual"
+            },
+            "modularOffice": {
+              "value": 0,
+              "enabled": true,
+              "method": "manual"
+            },
+            "transport": {
+              "value": 0,
+              "enabled": true,
+              "method": "manual"
+            },
+            "otherIndirect": {
+              "value": 10,
+              "enabled": true,
+              "method": "percentDirect"
+            }
+          },
+          "sources": {},
+          "versions": [
+            {
+              "id": "v1",
+              "name": "Базовая 01.08.2026",
+              "created": "2026-09-22",
+              "drivers": {
+                "revenue": [
+                  0,
+                  25000000,
+                  48000000,
+                  64000000,
+                  82000000,
+                  108000000,
+                  125000000,
+                  142000000,
+                  155000000,
+                  168000000,
+                  150000000,
+                  115000000
+                ],
+                "materials": [
+                  0,
+                  4000000,
+                  7000000,
+                  10000000,
+                  12000000,
+                  17000000,
+                  20000000,
+                  23000000,
+                  26000000,
+                  28000000,
+                  25000000,
+                  18000000
+                ],
+                "directPeople": [
+                  0,
+                  25,
+                  45,
+                  62,
+                  78,
+                  94,
+                  108,
+                  118,
+                  125,
+                  128,
+                  115,
+                  90
+                ],
+                "indirectPeople": [
+                  8,
+                  12,
+                  18,
+                  25,
+                  30,
+                  34,
+                  38,
+                  40,
+                  42,
+                  42,
+                  36,
+                  28
+                ],
+                "equipmentHours": [
+                  0,
+                  400,
+                  750,
+                  1100,
+                  1450,
+                  1800,
+                  2100,
+                  2300,
+                  2450,
+                  2400,
+                  1900,
+                  1200
+                ],
+                "nrkVolume": [
+                  0,
+                  0,
+                  0,
+                  10,
+                  25,
+                  40,
+                  55,
+                  70,
+                  82,
+                  90,
+                  60,
+                  30
+                ],
+                "payments": [
+                  0,
+                  0,
+                  20000000,
+                  35000000,
+                  55000000,
+                  72000000,
+                  95000000,
+                  115000000,
+                  128000000,
+                  145000000,
+                  150000000,
+                  130000000
+                ],
+                "advances": [
+                  25000000,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "advanceOffset": [
+                  0,
+                  0,
+                  5000000,
+                  5000000,
+                  5000000,
+                  5000000,
+                  5000000,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "factoring": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "guaranteeRate": 5,
+                "otherRevenue": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "parameters": {
+                "payroll": {
+                  "value": 150000,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "payrollTax": {
+                  "value": 13,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "insurance": {
+                  "value": 30.9,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "vacation": {
+                  "value": 8,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": false,
+                  "vat": false
+                },
+                "subcontract": {
+                  "value": 0,
+                  "method": "percentRevenue",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "equipment": {
+                  "value": 5000,
+                  "method": "unit",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "scaffolding": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "scaffoldLabor": {
+                  "value": 1500,
+                  "method": "unit",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "projectMaterials": {
+                  "value": 100,
+                  "method": "materials",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "consumables": {
+                  "value": 10,
+                  "method": "percentPayroll",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "nrk": {
+                  "value": 4000,
+                  "method": "unit",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "otherDirect": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "indirectPayroll": {
+                  "value": 180000,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "indirectTax": {
+                  "value": 13,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "indirectInsurance": {
+                  "value": 30.9,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "indirectVacation": {
+                  "value": 8,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": false,
+                  "vat": false
+                },
+                "food": {
+                  "value": 650,
+                  "method": "day",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "housing": {
+                  "value": 500,
+                  "method": "day",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "bus": {
+                  "value": 639344,
+                  "method": "unit",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "car": {
+                  "value": 319672,
+                  "method": "unit",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "formwork": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "ppe": {
+                  "value": 30000,
+                  "method": "annualPerPerson",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "tickets": {
+                  "value": 40000,
+                  "method": "rotation",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "permit": {
+                  "value": 8000,
+                  "method": "perPerson",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "medical": {
+                  "value": 3000,
+                  "method": "perPerson",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "vziz": {
+                  "value": 20000,
+                  "method": "annualPerPerson",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "office": {
+                  "value": 300000,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "warehouse": {
+                  "value": 800000,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "internet": {
+                  "value": 0,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "waste": {
+                  "value": 0,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "safety": {
+                  "value": 1,
+                  "method": "percentPayroll",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "accident": {
+                  "value": 5000,
+                  "method": "annualPerPerson",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "it": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "containers": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "modularOffice": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "transport": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "otherIndirect": {
+                  "value": 10,
+                  "method": "percentDirect",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                }
+              },
+              "year": 2026,
+              "vatRate": 22,
+              "vacationBasis": "annual",
+              "bindings": {},
+              "manualCosts": {},
+              "manualPayments": {},
+              "dataMode": "demo"
+            },
+            {
+              "id": "v2",
+              "name": "Текущая 22.09.2026",
+              "created": "2026-09-22",
+              "drivers": {
+                "revenue": [
+                  0,
+                  25000000,
+                  48000000,
+                  64000000,
+                  82000000,
+                  108000000,
+                  132500000,
+                  150520000,
+                  164300000,
+                  178080000,
+                  159000000,
+                  121900000
+                ],
+                "materials": [
+                  0,
+                  4000000,
+                  7000000,
+                  10000000,
+                  12000000,
+                  17000000,
+                  20000000,
+                  23000000,
+                  26000000,
+                  28000000,
+                  25000000,
+                  18000000
+                ],
+                "directPeople": [
+                  0,
+                  25,
+                  45,
+                  62,
+                  78,
+                  94,
+                  108,
+                  118,
+                  125,
+                  128,
+                  115,
+                  90
+                ],
+                "indirectPeople": [
+                  8,
+                  12,
+                  18,
+                  25,
+                  30,
+                  34,
+                  38,
+                  40,
+                  42,
+                  42,
+                  36,
+                  28
+                ],
+                "equipmentHours": [
+                  0,
+                  400,
+                  750,
+                  1100,
+                  1450,
+                  1800,
+                  2100,
+                  2300,
+                  2450,
+                  2400,
+                  1900,
+                  1200
+                ],
+                "nrkVolume": [
+                  0,
+                  0,
+                  0,
+                  10,
+                  25,
+                  40,
+                  55,
+                  70,
+                  82,
+                  90,
+                  60,
+                  30
+                ],
+                "payments": [
+                  0,
+                  0,
+                  20000000,
+                  35000000,
+                  55000000,
+                  72000000,
+                  95000000,
+                  115000000,
+                  128000000,
+                  145000000,
+                  150000000,
+                  130000000
+                ],
+                "advances": [
+                  25000000,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "advanceOffset": [
+                  0,
+                  0,
+                  5000000,
+                  5000000,
+                  5000000,
+                  5000000,
+                  5000000,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "factoring": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "guaranteeRate": 5,
+                "otherRevenue": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "parameters": {
+                "payroll": {
+                  "value": 150000,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "payrollTax": {
+                  "value": 13,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "insurance": {
+                  "value": 30.9,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "vacation": {
+                  "value": 8,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": false,
+                  "vat": false
+                },
+                "subcontract": {
+                  "value": 0,
+                  "method": "percentRevenue",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "equipment": {
+                  "value": 5000,
+                  "method": "unit",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "scaffolding": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "scaffoldLabor": {
+                  "value": 1500,
+                  "method": "unit",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "projectMaterials": {
+                  "value": 100,
+                  "method": "materials",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "consumables": {
+                  "value": 10,
+                  "method": "percentPayroll",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "nrk": {
+                  "value": 4000,
+                  "method": "unit",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "otherDirect": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "indirectPayroll": {
+                  "value": 180000,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "indirectTax": {
+                  "value": 13,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "indirectInsurance": {
+                  "value": 30.9,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "indirectVacation": {
+                  "value": 8,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": false,
+                  "vat": false
+                },
+                "food": {
+                  "value": 650,
+                  "method": "day",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "housing": {
+                  "value": 500,
+                  "method": "day",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "bus": {
+                  "value": 639344,
+                  "method": "unit",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "car": {
+                  "value": 319672,
+                  "method": "unit",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "formwork": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "ppe": {
+                  "value": 30000,
+                  "method": "annualPerPerson",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "tickets": {
+                  "value": 40000,
+                  "method": "rotation",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "permit": {
+                  "value": 8000,
+                  "method": "perPerson",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "medical": {
+                  "value": 3000,
+                  "method": "perPerson",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "vziz": {
+                  "value": 20000,
+                  "method": "annualPerPerson",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "office": {
+                  "value": 300000,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "warehouse": {
+                  "value": 800000,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "internet": {
+                  "value": 0,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "waste": {
+                  "value": 0,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "safety": {
+                  "value": 1,
+                  "method": "percentPayroll",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "accident": {
+                  "value": 5000,
+                  "method": "annualPerPerson",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "it": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "containers": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "modularOffice": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "transport": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "otherIndirect": {
+                  "value": 10,
+                  "method": "percentDirect",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                }
+              },
+              "year": 2026,
+              "vatRate": 22,
+              "vacationBasis": "annual",
+              "bindings": {},
+              "manualCosts": {},
+              "manualPayments": {},
+              "dataMode": "demo"
+            }
+          ],
+          "sourceProfiles": {},
+          "year": 2026,
+          "vacationBasis": "annual"
+        },
+        {
+          "id": "d2",
+          "number": "ПС-251/24",
+          "name": "Дополнительные работы",
+          "currency": "RUB",
+          "fx": 1,
+          "vatRate": 22,
+          "parameters": {
+            "payroll": {
+              "value": 150000,
+              "enabled": true,
+              "method": "monthly"
+            },
+            "payrollTax": {
+              "value": 13,
+              "enabled": true,
+              "method": "rate"
+            },
+            "insurance": {
+              "value": 30.9,
+              "enabled": true,
+              "method": "rate"
+            },
+            "vacation": {
+              "value": 8,
+              "enabled": true,
+              "method": "rate"
+            },
+            "subcontract": {
+              "value": 0,
+              "enabled": true,
+              "method": "percentRevenue"
+            },
+            "equipment": {
+              "value": 5000,
+              "enabled": true,
+              "method": "unit"
+            },
+            "scaffolding": {
+              "value": 0,
+              "enabled": true,
+              "method": "manual"
+            },
+            "scaffoldLabor": {
+              "value": 1500,
+              "enabled": true,
+              "method": "unit"
+            },
+            "projectMaterials": {
+              "value": 100,
+              "enabled": true,
+              "method": "materials"
+            },
+            "consumables": {
+              "value": 10,
+              "enabled": true,
+              "method": "percentPayroll"
+            },
+            "nrk": {
+              "value": 4000,
+              "enabled": true,
+              "method": "unit"
+            },
+            "otherDirect": {
+              "value": 0,
+              "enabled": true,
+              "method": "manual"
+            },
+            "indirectPayroll": {
+              "value": 180000,
+              "enabled": true,
+              "method": "monthly"
+            },
+            "indirectTax": {
+              "value": 13,
+              "enabled": true,
+              "method": "rate"
+            },
+            "indirectInsurance": {
+              "value": 30.9,
+              "enabled": true,
+              "method": "rate"
+            },
+            "indirectVacation": {
+              "value": 8,
+              "enabled": true,
+              "method": "rate"
+            },
+            "food": {
+              "value": 650,
+              "enabled": true,
+              "method": "day"
+            },
+            "housing": {
+              "value": 500,
+              "enabled": true,
+              "method": "day"
+            },
+            "bus": {
+              "value": 639344,
+              "enabled": true,
+              "method": "unit"
+            },
+            "car": {
+              "value": 319672,
+              "enabled": true,
+              "method": "unit"
+            },
+            "formwork": {
+              "value": 0,
+              "enabled": true,
+              "method": "manual"
+            },
+            "ppe": {
+              "value": 30000,
+              "enabled": true,
+              "method": "annualPerPerson"
+            },
+            "tickets": {
+              "value": 40000,
+              "enabled": true,
+              "method": "rotation"
+            },
+            "permit": {
+              "value": 8000,
+              "enabled": true,
+              "method": "perPerson"
+            },
+            "medical": {
+              "value": 3000,
+              "enabled": true,
+              "method": "perPerson"
+            },
+            "vziz": {
+              "value": 20000,
+              "enabled": true,
+              "method": "annualPerPerson"
+            },
+            "office": {
+              "value": 300000,
+              "enabled": true,
+              "method": "monthly"
+            },
+            "warehouse": {
+              "value": 800000,
+              "enabled": true,
+              "method": "monthly"
+            },
+            "internet": {
+              "value": 0,
+              "enabled": true,
+              "method": "monthly"
+            },
+            "waste": {
+              "value": 0,
+              "enabled": true,
+              "method": "monthly"
+            },
+            "safety": {
+              "value": 1,
+              "enabled": true,
+              "method": "percentPayroll"
+            },
+            "accident": {
+              "value": 5000,
+              "enabled": true,
+              "method": "annualPerPerson"
+            },
+            "it": {
+              "value": 0,
+              "enabled": true,
+              "method": "manual"
+            },
+            "containers": {
+              "value": 0,
+              "enabled": true,
+              "method": "manual"
+            },
+            "modularOffice": {
+              "value": 0,
+              "enabled": true,
+              "method": "manual"
+            },
+            "transport": {
+              "value": 0,
+              "enabled": true,
+              "method": "manual"
+            },
+            "otherIndirect": {
+              "value": 10,
+              "enabled": true,
+              "method": "percentDirect"
+            }
+          },
+          "sources": {},
+          "versions": [
+            {
+              "id": "v_mucuctuh3k83",
+              "name": "Базовая",
+              "created": "2026-09-22",
+              "drivers": {
+                "revenue": [
+                  0,
+                  25000000,
+                  48000000,
+                  64000000,
+                  82000000,
+                  108000000,
+                  125000000,
+                  142000000,
+                  155000000,
+                  168000000,
+                  150000000,
+                  115000000
+                ],
+                "materials": [
+                  0,
+                  4000000,
+                  7000000,
+                  10000000,
+                  12000000,
+                  17000000,
+                  20000000,
+                  23000000,
+                  26000000,
+                  28000000,
+                  25000000,
+                  18000000
+                ],
+                "directPeople": [
+                  0,
+                  25,
+                  45,
+                  62,
+                  78,
+                  94,
+                  108,
+                  118,
+                  125,
+                  128,
+                  115,
+                  90
+                ],
+                "indirectPeople": [
+                  8,
+                  12,
+                  18,
+                  25,
+                  30,
+                  34,
+                  38,
+                  40,
+                  42,
+                  42,
+                  36,
+                  28
+                ],
+                "equipmentHours": [
+                  0,
+                  400,
+                  750,
+                  1100,
+                  1450,
+                  1800,
+                  2100,
+                  2300,
+                  2450,
+                  2400,
+                  1900,
+                  1200
+                ],
+                "nrkVolume": [
+                  0,
+                  0,
+                  0,
+                  10,
+                  25,
+                  40,
+                  55,
+                  70,
+                  82,
+                  90,
+                  60,
+                  30
+                ],
+                "payments": [
+                  0,
+                  0,
+                  20000000,
+                  35000000,
+                  55000000,
+                  72000000,
+                  95000000,
+                  115000000,
+                  128000000,
+                  145000000,
+                  150000000,
+                  130000000
+                ],
+                "advances": [
+                  25000000,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "advanceOffset": [
+                  0,
+                  0,
+                  5000000,
+                  5000000,
+                  5000000,
+                  5000000,
+                  5000000,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "factoring": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "guaranteeRate": 5,
+                "otherRevenue": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "parameters": {
+                "payroll": {
+                  "value": 150000,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "payrollTax": {
+                  "value": 13,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "insurance": {
+                  "value": 30.9,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "vacation": {
+                  "value": 8,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": false,
+                  "vat": false
+                },
+                "subcontract": {
+                  "value": 0,
+                  "method": "percentRevenue",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "equipment": {
+                  "value": 5000,
+                  "method": "unit",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "scaffolding": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "scaffoldLabor": {
+                  "value": 1500,
+                  "method": "unit",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "projectMaterials": {
+                  "value": 100,
+                  "method": "materials",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "consumables": {
+                  "value": 10,
+                  "method": "percentPayroll",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "nrk": {
+                  "value": 4000,
+                  "method": "unit",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "otherDirect": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "indirectPayroll": {
+                  "value": 180000,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "indirectTax": {
+                  "value": 13,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "indirectInsurance": {
+                  "value": 30.9,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": false
+                },
+                "indirectVacation": {
+                  "value": 8,
+                  "method": "rate",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": false,
+                  "vat": false
+                },
+                "food": {
+                  "value": 650,
+                  "method": "day",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "housing": {
+                  "value": 500,
+                  "method": "day",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "bus": {
+                  "value": 639344,
+                  "method": "unit",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "car": {
+                  "value": 319672,
+                  "method": "unit",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "formwork": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "ppe": {
+                  "value": 30000,
+                  "method": "annualPerPerson",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "tickets": {
+                  "value": 40000,
+                  "method": "rotation",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "permit": {
+                  "value": 8000,
+                  "method": "perPerson",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "medical": {
+                  "value": 3000,
+                  "method": "perPerson",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "vziz": {
+                  "value": 20000,
+                  "method": "annualPerPerson",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "office": {
+                  "value": 300000,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "warehouse": {
+                  "value": 800000,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "internet": {
+                  "value": 0,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "waste": {
+                  "value": 0,
+                  "method": "monthly",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "safety": {
+                  "value": 1,
+                  "method": "percentPayroll",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "accident": {
+                  "value": 5000,
+                  "method": "annualPerPerson",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "it": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "containers": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "modularOffice": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "transport": {
+                  "value": 0,
+                  "method": "manual",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                },
+                "otherIndirect": {
+                  "value": 10,
+                  "method": "percentDirect",
+                  "enabled": true,
+                  "lag": 0,
+                  "cash": true,
+                  "vat": true
+                }
+              },
+              "year": 2026,
+              "vatRate": 22,
+              "vacationBasis": "annual",
+              "bindings": {},
+              "manualCosts": {},
+              "manualPayments": {},
+              "dataMode": "demo"
+            }
+          ],
+          "sourceProfiles": {},
+          "year": 2026,
+          "vacationBasis": "annual"
+        }
+      ]
+    },
+    {
+      "id": "c2",
+      "name": "Подрядчик 2",
+      "contracts": []
+    },
+    {
+      "id": "c3",
+      "name": "Подрядчик 3",
+      "contracts": []
+    },
+    {
+      "id": "c4",
+      "name": "Подрядчик 4",
+      "contracts": []
+    },
+    {
+      "id": "c5",
+      "name": "Подрядчик 5",
+      "contracts": []
+    },
+    {
+      "id": "c6",
+      "name": "Подрядчик 6",
+      "contracts": []
+    },
+    {
+      "id": "c7",
+      "name": "Подрядчик 7",
+      "contracts": []
+    },
+    {
+      "id": "c8",
+      "name": "Подрядчик 8",
+      "contracts": []
+    },
+    {
+      "id": "c9",
+      "name": "Подрядчик 9",
+      "contracts": []
+    },
+    {
+      "id": "c10",
+      "name": "Подрядчик 10",
+      "contracts": []
+    }
+  ],
+  "config": {
+    "schemaVersion": "1.0.0",
+    "editable": true,
+    "matching": {
+      "normalizeHeaders": true,
+      "ignoreCase": true,
+      "ignoreWhitespace": true,
+      "ignorePunctuation": true,
+      "minimumAutomaticConfidence": 0.9,
+      "requireConfirmationBelowConfidence": 0.98
+    },
+    "sources": {
+      "boq": {
+        "enabled": true,
+        "required": true,
+        "path": "data/sources/boq.xlsx",
+        "sheetAliases": [
+          "BOQ",
+          "Ведомость объемов",
+          "Ведомость объёмов"
+        ],
+        "headerRow": {
+          "mode": "auto",
+          "fallback": 9,
+          "searchRows": 30
+        },
+        "requiredFields": [
+          "item_code",
+          "item_name",
+          "unit",
+          "contract_quantity"
+        ],
+        "fields": {
+          "item_code": [
+            "Шифр ЕР",
+            "Код ЕР",
+            "Код расценки"
+          ],
+          "item_name": [
+            "Наименование ЕР",
+            "Наименование работ"
+          ],
+          "unit": [
+            "Ед. изм.",
+            "Единица измерения"
+          ],
+          "contract_quantity": [
+            "Кол-во по BoQ",
+            "Количество по BOQ",
+            "Объем по BOQ",
+            "Объём по BOQ"
+          ],
+          "labor_hours_unit": [
+            "Трудозатраты за ед., чел.-час."
+          ],
+          "labor_hours_total": [
+            "Трудозатраты всего, чел.-час"
+          ],
+          "machine_hours_unit": [
+            "Машины и механизмы за ед., маш.-час."
+          ],
+          "machine_hours_total": [
+            "Машины и механизмы всего, маш.-час"
+          ],
+          "smr_unit_rate": [
+            "Един. расценка на СМР прямые затраты, USD"
+          ],
+          "materials_unit_rate": [
+            "Един. расценка стоимости материалов и оборудования, USD"
+          ],
+          "kq_code": [
+            "Код KQ-1",
+            "Код KQ-2",
+            "KQ"
+          ],
+          "kq_name": [
+            "Наименование KQ-1",
+            "Наименование KQ-2"
+          ]
+        }
+      },
+      "ksg": {
+        "enabled": true,
+        "required": true,
+        "path": "data/sources/ksg.xlsx",
+        "sheetAliases": [
+          "КСГ",
+          "Календарный график",
+          "График производства"
+        ],
+        "headerRow": {
+          "mode": "auto",
+          "fallback": 2,
+          "searchRows": 20
+        },
+        "dynamicColumns": {
+          "mode": "dateHeaders",
+          "grain": "month"
+        },
+        "requiredFields": [
+          "kq_code",
+          "work_name",
+          "planned_quantity"
+        ],
+        "fields": {
+          "kq_code": [
+            "Ключевые работы",
+            "Код KQ",
+            "KQ"
+          ],
+          "work_name": [
+            "Название работы",
+            "Наименование работы"
+          ],
+          "work_id": [
+            "Идентификатор работы",
+            "Код работы"
+          ],
+          "smr_rate": [
+            "Расценка СМР"
+          ],
+          "materials_rate": [
+            "Расценка МТР"
+          ],
+          "contract_quantity": [
+            "Контрактные объемы",
+            "Контрактные объёмы"
+          ],
+          "planned_quantity": [
+            "Кол-во по завершении",
+            "Количество по завершении"
+          ],
+          "actual_quantity": [
+            "Фактическое количество"
+          ],
+          "remaining_quantity": [
+            "Оставшееся количество"
+          ],
+          "start_date": [
+            "Начало",
+            "Дата начала"
+          ],
+          "finish_date": [
+            "Окончание",
+            "Дата окончания"
+          ]
+        }
+      },
+      "personnel": {
+        "enabled": true,
+        "required": true,
+        "path": "data/sources/personnel.xlsx",
+        "sheetAliases": [
+          "Персонал",
+          "График персонала",
+          "Ресурсный график персонала"
+        ],
+        "headerRow": {
+          "mode": "auto",
+          "fallback": 4,
+          "searchRows": 20
+        },
+        "dynamicColumns": {
+          "mode": "dateHeaders",
+          "grain": "day"
+        },
+        "requiredFields": [
+          "contractor",
+          "category",
+          "work_name",
+          "personnel_type"
+        ],
+        "fields": {
+          "source_key": [
+            "Ключ"
+          ],
+          "contractor": [
+            "Подрядчик",
+            "Контрагент"
+          ],
+          "facility": [
+            "Установка",
+            "Объект"
+          ],
+          "title": [
+            "Титул"
+          ],
+          "category": [
+            "Категория"
+          ],
+          "kq_code": [
+            "KQ",
+            "Код KQ"
+          ],
+          "discipline": [
+            "Дисциплина"
+          ],
+          "work_name": [
+            "Наименование работ",
+            "Работа"
+          ],
+          "personnel_type": [
+            "Персонал",
+            "Профессия",
+            "Категория персонала"
+          ]
+        }
+      },
+      "equipment": {
+        "enabled": true,
+        "required": true,
+        "path": "data/sources/equipment.xlsx",
+        "sheetAliases": [
+          "Техника",
+          "График техники",
+          "Ресурсный график техники"
+        ],
+        "headerRow": {
+          "mode": "auto",
+          "fallback": 4,
+          "searchRows": 20
+        },
+        "dynamicColumns": {
+          "mode": "dateHeaders",
+          "grain": "day"
+        },
+        "requiredFields": [
+          "contractor",
+          "equipment_type",
+          "equipment_name",
+          "work_name"
+        ],
+        "fields": {
+          "source_key": [
+            "Ключ"
+          ],
+          "contractor": [
+            "Подрядчик",
+            "Контрагент"
+          ],
+          "facility": [
+            "Установка",
+            "Объект"
+          ],
+          "title": [
+            "Титул"
+          ],
+          "category": [
+            "Категория"
+          ],
+          "equipment_type": [
+            "Тип техники",
+            "Группа техники"
+          ],
+          "equipment_name": [
+            "Техника",
+            "Наименование техники"
+          ],
+          "work_name": [
+            "Наименование работ",
+            "Работа"
+          ],
+          "kq_code": [
+            "KQ",
+            "Код KQ"
+          ],
+          "discipline": [
+            "Дисциплина"
+          ]
+        }
+      },
+      "primary_documents": {
+        "enabled": true,
+        "required": true,
+        "path": "data/sources/primary_documents.xlsx",
+        "sheetAliases": [
+          "Первичка в вал.контракта",
+          "Первичка",
+          "КС и первичные документы"
+        ],
+        "headerRow": {
+          "mode": "auto",
+          "fallback": 1,
+          "searchRows": 20
+        },
+        "requiredFields": [
+          "contractor",
+          "contract_number",
+          "currency",
+          "document_number",
+          "document_date",
+          "amount_without_vat"
+        ],
+        "fields": {
+          "contractor": [
+            "Контрагент",
+            "Подрядчик"
+          ],
+          "contractor_code": [
+            "Код КА"
+          ],
+          "legal_entity": [
+            "ЮЛ",
+            "Юридическое лицо"
+          ],
+          "expense_type": [
+            "Вид расхода"
+          ],
+          "contract_number": [
+            "Договор с КА",
+            "Договор",
+            "Номер договора"
+          ],
+          "project": [
+            "Проект"
+          ],
+          "currency": [
+            "Валюта"
+          ],
+          "vat_rate": [
+            "Ставка НДС",
+            "НДС"
+          ],
+          "document_number": [
+            "№ КС-3, ПУД, ТОРГ-12",
+            "Номер КС-3",
+            "Номер документа"
+          ],
+          "document_date": [
+            "Дата КС-3",
+            "Дата подписания КС"
+          ],
+          "amount_without_vat": [
+            "Сумма без НДС"
+          ],
+          "services_without_vat": [
+            "Услуги без НДС"
+          ],
+          "materials_without_vat": [
+            "МТР П без НДС"
+          ],
+          "amount_with_vat": [
+            "Сумма с НДС"
+          ],
+          "guarantee_rate": [
+            "% ГУ"
+          ],
+          "guarantee_without_vat": [
+            "сумма ГУ без НДС"
+          ],
+          "advance_offset_without_vat": [
+            "Аванс зачет без НДС",
+            "Аванс зачёт без НДС"
+          ],
+          "planned_payment_date": [
+            "ПЛАН ОПЛАТЫ ДАТА",
+            "Плановая дата оплаты"
+          ],
+          "actual_payment_without_vat": [
+            "Факт оплаты по КС без НДС"
+          ],
+          "actual_payment_date": [
+            "Дата оплаты факт"
+          ]
+        }
+      },
+      "payments": {
+        "enabled": true,
+        "required": true,
+        "path": "data/sources/payments.xlsx",
+        "sheetAliases": [
+          "Платежи",
+          "Реестр платежей",
+          "Фактические платежи"
+        ],
+        "headerRow": {
+          "mode": "auto",
+          "fallback": 1,
+          "searchRows": 20
+        },
+        "requiredFields": [
+          "payment_date",
+          "contractor",
+          "contract_number",
+          "amount_without_vat"
+        ],
+        "fields": {
+          "payment_date": [
+            "Дата платежа"
+          ],
+          "contractor": [
+            "Контрагент",
+            "Имя 1",
+            "КА"
+          ],
+          "contract_number": [
+            "Номер договора",
+            "Договор"
+          ],
+          "currency": [
+            "Валюта транзакции"
+          ],
+          "amount_with_vat": [
+            "Финансирование, с НДС, Влт",
+            "Финансирование, руб. экв, с НДС"
+          ],
+          "amount_without_vat": [
+            "Финансирование, без НДС, Влт",
+            "Финансирование, руб. экв, без НДС"
+          ],
+          "payment_purpose": [
+            "Назначение платежа"
+          ],
+          "payment_type": [
+            "Вид оплаты (аванс, оплата по факту)"
+          ],
+          "expense_type": [
+            "Вид расхода-формулу снизу протянуть",
+            "Вид расхода"
+          ]
+        }
+      },
+      "factoring": {
+        "enabled": true,
+        "required": false,
+        "path": "data/sources/factoring.xlsx",
+        "sheetAliases": [
+          "Факторинг",
+          "Реестр факторинга"
+        ],
+        "headerRow": {
+          "mode": "auto",
+          "fallback": 1,
+          "searchRows": 20
+        },
+        "requiredFields": [
+          "contractor",
+          "contract_number",
+          "document_number",
+          "financed_amount"
+        ],
+        "fields": {
+          "contractor": [
+            "Контрагент",
+            "Подрядчик"
+          ],
+          "project": [
+            "Проект"
+          ],
+          "factoring_contract": [
+            "Договор на факторинге"
+          ],
+          "contract_number": [
+            "Договор",
+            "Номер договора"
+          ],
+          "bank": [
+            "Банк"
+          ],
+          "financed_amount": [
+            "Оплаченная сумма банком"
+          ],
+          "document_number": [
+            "Номер КС-3"
+          ],
+          "document_date": [
+            "Дата КС-3"
+          ],
+          "financing_start_date": [
+            "Дата начала начисления Процентов за пользование коммерческим кредитом3"
+          ],
+          "financing_end_date": [
+            "Дата окончания периода коммерческого кредита6"
+          ],
+          "amount_with_vat_currency": [
+            "Сумма в евро / Доллар с НДС"
+          ],
+          "exchange_rate": [
+            "курс евро / доллар",
+            "Курс"
+          ],
+          "amount_without_vat_currency": [
+            "Сумма в евро / Доллар без НДС"
+          ],
+          "payment_date": [
+            "Дата платежа"
+          ],
+          "amount_without_vat_rub": [
+            "Оплачено без НДС в руб."
+          ]
+        }
+      }
+    }
+  }
+}
