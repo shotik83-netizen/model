@@ -30,7 +30,16 @@ python3 scripts/build_standalone.py
 python3 scripts/build_standalone.py --check
 node tests/test_core.js
 node tests/test_economy.js
+python3 tests/test_excel_audit.py
 python3 scripts/validate_model.py
 ```
+
+Исходную Excel-книгу можно независимо проверить локально без её изменения или публикации:
+
+```bash
+python3 scripts/audit_excel_reference.py /path/to/model.xlsx --year 2026
+```
+
+Проверка сопоставляет сохранённые месячные балансы БДР и БДДС внутри книги. Она не пересчитывает Excel и не доказывает равенство приложения исходной книге; для этого ещё нужны одинаковые входные данные, период и правила статей.
 
 SharePoint получает только автономный `index.html`; файлы разработки и тесты в эксплуатационном контуре не выполняются.
