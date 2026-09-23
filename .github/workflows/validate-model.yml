@@ -13,5 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Verify standalone HTML build
+        run: python3 scripts/build_standalone.py --check
       - name: Validate data contract, workbooks and factor bridge
         run: python3 scripts/validate_model.py
