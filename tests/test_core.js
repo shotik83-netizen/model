@@ -22,5 +22,26 @@ for(const test of cases){
 
 const aggregate=CalculationCore.aggregateFactors(cases.map(test=>CalculationCore.factorBridge(test)));
 assert.ok(Math.abs(aggregate.control)<1e-9,'aggregate control');
-console.log('CALCULATION CORE TESTS: OK');
 
+const boqRecords=[
+ {kqCode:'KQ.01',kqName:'Земляные работы',quantity:10,laborHours:20,machineHours:3,cost:1000},
+ {kqCode:'KQ-01',kqName:'Земляные работы',quantity:5,laborHours:8,machineHours:2,cost:600},
+ {kqCode:'KQ 02',kqName:'Монтаж',quantity:4,laborHours:12,machineHours:1,cost:800}
+];
+const kq2=DataAdapter.aggregateKq2(boqRecords);
+assert.equal(kq2.length,2,'KQ-2 groups');
+assert.equal(kq2.reduce((total,row)=>total+row.cost,0),2400,'BOQ cost conservation');
+assert.equal(kq2.reduce((total,row)=>total+row.quantity,0),19,'BOQ quantity conservation');
+const workItems=DataAdapter.linkKsgToKq2([
+ {workId:'w1',kqCode:'KQ-01',name:'Земляные работы',unit:'м3',plannedQuantity:15,volumes:[5,5,5]},
+ {workId:'w2',kqCode:'KQ-02',name:'Монтаж',unit:'шт',plannedQuantity:4,volumes:[1,1,1,1]},
+ {workId:'w3',kqCode:'KQ-99',name:'Новая работа',unit:'шт',plannedQuantity:2,volumes:[2]}
+],kq2);
+assert.equal(workItems[0].scheduleQuantity,15,'KSG monthly conservation');
+assert.equal(workItems.filter(row=>row.matchRule==='exact').length,2,'matched KSG rows');
+const chain=DataAdapter.workChainControl(kq2,workItems);
+assert.equal(chain.boqCost,2400,'chain BOQ cost');
+assert.equal(chain.matchedRows,2,'chain matches');
+assert.equal(chain.unmatchedRows,1,'chain unmatched');
+assert.equal(chain.rows.find(row=>row.code==='KQ-01').quantityVariance,0,'KQ-01 volume control');
+console.log('CALCULATION CORE TESTS: OK');
