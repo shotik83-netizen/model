@@ -32,6 +32,7 @@ function compareWorkItems(baseItems=[],currentItems=[],{baseFx=1,currentFx=1}={}
  }).sort((a,b)=>(a.code||'').localeCompare(b.code||'')||a.label.localeCompare(b.label));
  return{rows,total:aggregateFactors(rows)};
 }
-return{number,sum,toRub,fromRub,factorBridge,aggregateFactors,compareWorkItems};
+function residualFactor({base=0,current=0,explained=0}={}){return number(current)-number(base)-number(explained);}
+return{number,sum,toRub,fromRub,factorBridge,aggregateFactors,compareWorkItems,residualFactor};
 })();
 if(typeof module!=='undefined'&&module.exports)module.exports=CalculationCore;
