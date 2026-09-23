@@ -13,6 +13,7 @@
     "boq": {
       "enabled": true,
       "required": true,
+      "currency": "USD",
       "path": "data/sources/boq.xlsx",
       "sheetAliases": ["BOQ", "Ведомость объемов", "Ведомость объёмов"],
       "headerRow": { "mode": "auto", "fallback": 9, "searchRows": 30 },
