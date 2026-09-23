@@ -23,6 +23,19 @@ for(const test of cases){
 const aggregate=CalculationCore.aggregateFactors(cases.map(test=>CalculationCore.factorBridge(test)));
 assert.ok(Math.abs(aggregate.control)<1e-9,'aggregate control');
 
+const workComparison=CalculationCore.compareWorkItems([
+ {stableKey:'earth',name:'Земляные работы',kq2:'KQ-01',unit:'м3',volumes:[5,5],rate:10},
+ {stableKey:'removed',name:'Исключённая работа',unit:'шт',volumes:[2],rate:20}
+],[
+ {stableKey:'earth',name:'Земляные работы',kq2:'KQ-01',unit:'м3',volumes:[6,6],rate:12},
+ {stableKey:'new',name:'Новая работа',unit:'шт',volumes:[3],rate:30}
+],{baseFx:2,currentFx:2});
+assert.equal(workComparison.rows.find(row=>row.key==='earth').volume,40,'work volume factor in RUB');
+assert.equal(workComparison.rows.find(row=>row.key==='earth').price,48,'work price factor in RUB');
+assert.equal(workComparison.rows.find(row=>row.key==='new').status,'new','new work status');
+assert.equal(workComparison.rows.find(row=>row.key==='removed').status,'removed','removed work status');
+assert.ok(Math.abs(workComparison.total.control)<1e-9,'work comparison control');
+
 const boqRecords=[
  {kqCode:'KQ.01',kqName:'Земляные работы',quantity:10,laborHours:20,machineHours:3,cost:1000},
  {kqCode:'KQ-01',kqName:'Земляные работы',quantity:5,laborHours:8,machineHours:2,cost:600},
