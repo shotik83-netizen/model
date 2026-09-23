@@ -35,6 +35,7 @@ assert.equal(workComparison.rows.find(row=>row.key==='earth').price,48,'work pri
 assert.equal(workComparison.rows.find(row=>row.key==='new').status,'new','new work status');
 assert.equal(workComparison.rows.find(row=>row.key==='removed').status,'removed','removed work status');
 assert.ok(Math.abs(workComparison.total.control)<1e-9,'work comparison control');
+assert.equal(CalculationCore.residualFactor({base:100,current:145,explained:30}),15,'residual factor');
 
 const boqRecords=[
  {kqCode:'KQ.01',kqName:'Земляные работы',quantity:10,laborHours:20,machineHours:3,cost:1000},
