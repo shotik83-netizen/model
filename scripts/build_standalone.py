@@ -14,6 +14,7 @@ SRC = ROOT / "src"
 TEMPLATE = SRC / "index.template.html"
 CSS = SRC / "app.css"
 JS = SRC / "app.js"
+JS_PARTS = [SRC / "data-adapter.js", SRC / "calculation-core.js", JS]
 CSS_TOKEN = "{{APP_CSS}}"
 JS_TOKEN = "{{APP_JS}}"
 
@@ -50,7 +51,8 @@ def render() -> bytes:
     if template.count(CSS_TOKEN) != 1 or template.count(JS_TOKEN) != 1:
         raise SystemExit("Template must contain one CSS and one JavaScript placeholder")
     html = template.replace(CSS_TOKEN, CSS.read_text(encoding="utf-8"))
-    html = html.replace(JS_TOKEN, JS.read_text(encoding="utf-8"))
+    javascript = "\n".join(path.read_text(encoding="utf-8") for path in JS_PARTS)
+    html = html.replace(JS_TOKEN, javascript)
     return html.encode("utf-8")
 
 
@@ -79,4 +81,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
