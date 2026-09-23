@@ -16,7 +16,22 @@ function factorBridge({q0=0,p0=null,q1=0,p1=null}={}){
 function aggregateFactors(rows){
  return rows.reduce((total,row)=>{for(const key of ['base','current','volume','price','variance','control'])total[key]+=number(row[key]);return total;},{base:0,current:0,volume:0,price:0,variance:0,control:0});
 }
-return{number,sum,toRub,fromRub,factorBridge,aggregateFactors};
+function compareWorkItems(baseItems=[],currentItems=[],{baseFx=1,currentFx=1}={}){
+ const group=items=>items.reduce((map,item,index)=>{
+  const key=String(item.stableKey||item.workId||item.id||`row-${index}`),quantity=sum(Array.isArray(item.volumes)?item.volumes:[item.quantity??item.plannedQuantity]),rate=number(item.rate??item.actualRate??item.currentRate??item.contractRate);
+  if(!map.has(key))map.set(key,{key,label:String(item.name||item.label||key),code:String(item.kq2||item.kqCode||''),unit:String(item.unit||''),quantity:0,weightedAmount:0,rateCount:0});
+  const row=map.get(key);row.quantity+=quantity;row.weightedAmount+=quantity*rate;row.rateCount+=rate?1:0;
+  return map;
+ },new Map());
+ const base=group(baseItems),current=group(currentItems),keys=new Set([...base.keys(),...current.keys()]);
+ const rows=[...keys].map(key=>{
+  const left=base.get(key),right=current.get(key),q0=left?.quantity||0,q1=right?.quantity||0;
+  const rawP0=left?(q0?left.weightedAmount/q0:0):null,rawP1=right?(q1?right.weightedAmount/q1:0):null;
+  const p0=rawP0==null?null:toRub(rawP0,baseFx),p1=rawP1==null?null:toRub(rawP1,currentFx),bridge=factorBridge({q0,p0,q1,p1});
+  return{key,label:right?.label||left?.label||key,code:right?.code||left?.code||'',unit:right?.unit||left?.unit||'',q0,rawP0,q1,rawP1,p0,p1,...bridge};
+ }).sort((a,b)=>(a.code||'').localeCompare(b.code||'')||a.label.localeCompare(b.label));
+ return{rows,total:aggregateFactors(rows)};
+}
+return{number,sum,toRub,fromRub,factorBridge,aggregateFactors,compareWorkItems};
 })();
 if(typeof module!=='undefined'&&module.exports)module.exports=CalculationCore;
-
