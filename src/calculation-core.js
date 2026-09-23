@@ -16,6 +16,11 @@ function factorBridge({q0=0,p0=null,q1=0,p1=null}={}){
 function aggregateFactors(rows){
  return rows.reduce((total,row)=>{for(const key of ['base','current','volume','price','variance','control'])total[key]+=number(row[key]);return total;},{base:0,current:0,volume:0,price:0,variance:0,control:0});
 }
+function topWorkFactors(rows,limit=10){
+ const sorted=[...rows].sort((a,b)=>Math.max(Math.abs(b.base),Math.abs(b.current))-Math.max(Math.abs(a.base),Math.abs(a.current))||String(a.key).localeCompare(String(b.key)));
+ const visible=sorted.slice(0,limit),remainder=sorted.slice(limit),other=remainder.length?{key:'other-works',label:`Прочие работы (${remainder.length})`,status:'group',...aggregateFactors(remainder)}:null;
+ return{visible,other,hiddenCount:remainder.length,total:aggregateFactors(rows)};
+}
 function compareWorkItems(baseItems=[],currentItems=[],{baseFx=1,currentFx=1}={}){
  const group=items=>items.reduce((map,item,index)=>{
   const key=String(item.stableKey||item.workId||item.id||`row-${index}`),quantity=sum(Array.isArray(item.volumes)?item.volumes:[item.quantity??item.plannedQuantity]),rate=number(item.rate??item.actualRate??item.currentRate??item.contractRate);
@@ -59,6 +64,6 @@ function calculateModel(v,costDefs){
  const inflow=d.payments.map((x,m)=>x+d.advances[m]+d.factoring[m]-d.advanceOffset[m]),ncf=inflow.map((x,m)=>x-operatingPayments[m]-vatPay[m]);let acc=0;const cumulative=ncf.map(x=>acc+=x);
  return{rows,revenue,direct,indirect,costs,profit,payments,directPayments,indirectPayments,outputVat,advanceVat,offsetVat,inputVat,vatPay,operatingPayments,inflow,ncf,cumulative,deferred};
 }
-return{number,sum,toRub,fromRub,factorBridge,aggregateFactors,compareWorkItems,residualFactor,calculateModel};
+return{number,sum,toRub,fromRub,factorBridge,aggregateFactors,topWorkFactors,compareWorkItems,residualFactor,calculateModel};
 })();
 if(typeof module!=='undefined'&&module.exports)module.exports=CalculationCore;

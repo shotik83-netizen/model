@@ -11,3 +11,23 @@ body{min-width:360px}button:focus-visible,input:focus-visible,select:focus-visib
 @media(max-width:760px){.workspace{grid-template-columns:minmax(0,1fr) 180px}.portfolio{padding:18px 8px}.content{padding:16px 10px}.topin{padding:12px;align-items:flex-start;flex-wrap:wrap}.brand h1{font-size:15px}.kpi strong{font-size:21px}.grid4{gap:8px}.card{padding:12px}.context{display:block}.context h2{font-size:19px}.context .badge{margin-top:8px}.costrow{grid-template-columns:1fr 1fr}.costrow>div:first-child{grid-column:1/-1}.source-fields{grid-template-columns:1fr 110px}.source-fields>input{grid-column:1/-1}.binding-row{grid-template-columns:1fr}.admin-grid{grid-template-columns:1fr}.edit-toggle{font-size:12px}.modelbar .control{min-width:130px}.sectionhead{flex-wrap:wrap}.kq-table{font-size:10px}.kq-table th,.kq-table td{padding:4px}.kq-table th:nth-child(1){width:10%}.kq-table th:nth-child(2){width:26%}}
 @media(max-width:560px){.workspace{grid-template-columns:minmax(0,1fr)}.portfolio{position:static;border-right:0;border-bottom:1px solid var(--line);height:auto;max-height:none;grid-row:1}.content{grid-row:2}.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}.source-fields{grid-template-columns:1fr 110px}.source-modal .formgrid{grid-template-columns:1fr}.modelbar .actions{width:100%}footer{flex-direction:column}.tab{min-width:130px}}
 
+/* Compact factor view: keep navigation and the top ten works in one viewport. */
+#comparison .card{padding:12px}#comparison .sectionhead{margin-bottom:8px}
+.factor-compact{display:grid;gap:8px}.factor-compact h4{margin:0;font-size:14px}
+.factor-summary,.factor-table{min-width:0;table-layout:fixed;width:100%;font-size:12px}
+.factor-summary th,.factor-summary td,.factor-table th,.factor-table td{padding:5px 7px;line-height:1.2}
+.factor-summary td:first-child,.factor-table td:first-child{min-width:0;max-width:none}
+.factor-summary th:first-child{width:24%}.factor-summary th:not(:first-child){width:25%}
+.factor-table th:first-child{width:10%}.factor-table th:nth-child(2){width:33%}
+.factor-table th:not(:first-child):not(:nth-child(2)){width:11.4%}
+.factor-table td:nth-child(2),.factor-table th:nth-child(2){text-align:left;white-space:normal}
+.factor-tablewrap{max-height:clamp(210px,calc(100dvh - 380px),460px)}
+.factor-table th{position:sticky;top:0;z-index:4;white-space:normal}
+.factor-row-details summary{cursor:pointer;font-weight:600}.factor-row-details div{color:var(--muted);font-size:11px;margin-top:4px}
+.factor-heading{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.factor-other td{background:#f7faf9;font-weight:600}
+.factor-method,.factor-expenses{border-top:1px solid var(--line);padding:5px 2px}
+.factor-method summary,.factor-expenses summary{cursor:pointer;color:var(--navy);font-weight:600}
+.factor-expenses[open]{max-height:65dvh;overflow:auto}
+.factor-expenses .tablewrap{max-height:50dvh}
+@media(max-width:900px){.factor-summary,.factor-table{min-width:690px}.factor-tablewrap{max-height:55dvh}}
