@@ -34,7 +34,52 @@ body{min-width:360px}button:focus-visible,input:focus-visible,select:focus-visib
 <div id="sourceModal" class="modalback"><div class="modal source-modal" role="dialog" aria-modal="true" aria-labelledby="sourceTitle"><button class="close" data-close="sourceModal" aria-label="Закрыть">×</button><h3 id="sourceTitle">Настройка источника</h3><div id="sourceEditor"></div><div class="actions space"><button class="btn" id="sourcePreviewButton">Проверить соответствия</button><button class="btn primary edit-action" id="sourceSaveButton">Сохранить настройки</button></div><div id="sourcePreview" class="space"></div></div></div>
 <div id="contractModal" class="modalback"><form id="contractForm" class="modal" role="dialog" aria-modal="true" aria-labelledby="contractTitle"><button class="close" type="button" data-close="contractModal" aria-label="Закрыть">×</button><h3 id="contractTitle">Новый договор</h3><div class="formgrid"><div><label for="newContractor">Подрядчик</label><select id="newContractor"></select></div><div><label for="newContractNumber">Номер договора</label><input id="newContractNumber" required></div><div class="wide"><label for="newContractName">Наименование</label><input id="newContractName" required></div></div><button class="btn primary space" type="submit">Создать</button></form></div>
 
-<script>
+<script>const DataAdapter=(()=>{
+const CURRENCY_CODES=new Set(['RUB','USD','EUR','CNY','AED','KZT']);
+const finiteNumber=(value,fallback=0)=>{const number=Number(value);return Number.isFinite(number)?number:fallback;};
+const monthlySeries=value=>Array.from({length:12},(_,month)=>finiteNumber(Array.isArray(value)?value[month]:0));
+function moneyContext(value={},fallback={}){
+ const requested=String(value.currency||fallback.currency||'RUB').toUpperCase();
+ const currency=CURRENCY_CODES.has(requested)?requested:'RUB';
+ const raw=value.fxRate??fallback.fxRate??fallback.fx;
+ const fxRate=currency==='RUB'?1:(finiteNumber(raw)>0?finiteNumber(raw):0);
+ return{currency,fxRate};
+}
+function stableKey(parts){
+ const source=parts.map(value=>String(value??'').trim().toLowerCase().replace(/\s+/g,' ')).join('|');
+ let hash=2166136261;
+ for(let i=0;i<source.length;i++){hash^=source.charCodeAt(i);hash=Math.imul(hash,16777619);}
+ return'auto-'+(hash>>>0).toString(16).padStart(8,'0');
+}
+return{CURRENCY_CODES,finiteNumber,monthlySeries,moneyContext,stableKey};
+})();
+if(typeof module!=='undefined'&&module.exports)module.exports=DataAdapter;
+
+
+const CalculationCore=(()=>{
+const number=value=>{const result=Number(value);return Number.isFinite(result)?result:0;};
+const sum=values=>values.reduce((total,value)=>total+number(value),0);
+const toRub=(amount,fxRate)=>{const rate=number(fxRate);return rate>0?number(amount)*rate:NaN;};
+const fromRub=(amount,fxRate)=>{const rate=number(fxRate);return rate>0?number(amount)/rate:NaN;};
+function factorBridge({q0=0,p0=null,q1=0,p1=null}={}){
+ q0=number(q0);q1=number(q1);
+ if(p0==null&&p1==null)return{status:'unmatched',base:0,current:0,volume:0,price:0,variance:0,control:NaN};
+ let base,current,volume,price,status='matched';
+ if(p0==null){p1=number(p1);base=0;current=q1*p1;volume=current;price=0;status='new';}
+ else if(p1==null){p0=number(p0);base=q0*p0;current=0;volume=-base;price=0;status='removed';}
+ else{p0=number(p0);p1=number(p1);base=q0*p0;current=q1*p1;volume=(q1-q0)*p0;price=q1*(p1-p0);}
+ const variance=current-base,control=current-(base+volume+price);
+ return{status,base,current,volume,price,variance,control};
+}
+function aggregateFactors(rows){
+ return rows.reduce((total,row)=>{for(const key of ['base','current','volume','price','variance','control'])total[key]+=number(row[key]);return total;},{base:0,current:0,volume:0,price:0,variance:0,control:0});
+}
+return{number,sum,toRub,fromRub,factorBridge,aggregateFactors};
+})();
+if(typeof module!=='undefined'&&module.exports)module.exports=CalculationCore;
+
+
+
 const MONTHS=["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
 const DEFAULT_MAPPING={
   "schemaVersion": "1.0.0",
@@ -219,8 +264,8 @@ const SOURCE_KEYS=[['boq','BOQ'],['ksg','КСГ'],['personnel','Персонал
 const CURRENCIES={RUB:'Российский рубль',USD:'Доллар США',EUR:'Евро',CNY:'Китайский юань',AED:'Дирхам ОАЭ',KZT:'Казахстанский тенге'};
 const state={config:null,currentContractor:'c1',currentContract:'d1',currentVersion:'v2',contractors:[],results:null,displayCurrency:'contract'};
 const uid=p=>p+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);const sum=a=>a.reduce((s,x)=>s+(Number(x)||0),0);const pct=n=>Math.abs(Number(n)||0)<1e-9?'—':(Number(n)||0).toFixed(1).replace('.',',')+'%';
-const fxOf=v=>v?.currency==='RUB'?1:(Number(v?.fxRate)>0?Number(v.fxRate):0);
-const rub=(n,v=version())=>fxOf(v)>0?(Number(n)||0)*fxOf(v):NaN;
+const fxOf=v=>DataAdapter.moneyContext(v).fxRate;
+const rub=(n,v=version())=>CalculationCore.toRub(n,fxOf(v));
 const displayCode=(v=version())=>state.displayCurrency==='rub'?'RUB':v?.currency||'RUB';
 const displayAmount=(n,v=version())=>state.displayCurrency==='rub'?rub(n,v):Number(n)||0;
 const fmtRaw=n=>Math.abs(Number(n)||0)<1e-9?'—':new Intl.NumberFormat('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1}).format((Number(n)||0)/state.unit);
@@ -248,7 +293,7 @@ function normalize(){
  state.unit=[1,1000,1000000].includes(Number(state.unit))?Number(state.unit):1000000;
  state.config=state.config||{editable:true};
  for(const c of state.contractors){c.contracts=c.contracts||[];const migrateMapping=!c.sourceMapping,baseMapping=contractorMapping(c.id);c.sourceMapping=c.sourceMapping||baseMapping;c.sourceMapping.sources=c.sourceMapping.sources||baseMapping.sources;for(const [key,source] of Object.entries(baseMapping.sources))c.sourceMapping.sources[key]={...source,...(c.sourceMapping.sources[key]||{})};for(const d of c.contracts){d.sources=d.sources||{};d.sourceProfiles=d.sourceProfiles||{};if(migrateMapping)for(const [k,p] of Object.entries(d.sourceProfiles))if(p&&Object.keys(p).length)c.sourceMapping.sources[k]={...c.sourceMapping.sources[k],...clone(p)};d.parameters={...defaults(),...d.parameters};d.year=d.year||2026;d.vatRate=d.vatRate??22;d.vacationBasis=d.vacationBasis||'annual';
- for(const v of d.versions){v.parameters=clone(v.parameters||d.parameters);for(const x of COST_DEFS)v.parameters[x[2]]={...defaults()[x[2]],...v.parameters[x[2]]};v.year=v.year||d.year;v.vatRate=v.vatRate??d.vatRate;v.vacationBasis=v.vacationBasis||d.vacationBasis;v.actualThroughMonth=Math.max(0,Math.min(12,Number.isInteger(Number(v.actualThroughMonth))?Number(v.actualThroughMonth):0));v.currency=CURRENCIES[v.currency]?v.currency:CURRENCIES[d.currency]?d.currency:'RUB';v.fxRate=v.currency==='RUB'?1:(Number(v.fxRate??d.fx)>0?Number(v.fxRate??d.fx):0);v.bindings=v.bindings||{};v.manualCosts=v.manualCosts||{};v.manualPayments=v.manualPayments||{};v.drivers=v.drivers||{};for(const [k] of SERIES)v.drivers[k]=Array.from({length:12},(_,m)=>Number(v.drivers[k]?.[m])||0);v.workItems=Array.isArray(v.workItems)?v.workItems.map((x,i)=>{const rate=Number(x.actualRate??x.currentRate??x.contractRate??x.rate)||0;return{name:String(x.name||'Вид работ '+(i+1)),unit:String(x.unit||'ед.'),kq1:String(x.kq1||''),kq2:String(x.kq2||''),stableKey:String(x.stableKey||''),matchRule:String(x.matchRule||'manual'),matchConfidence:Number(x.matchConfidence)||0,contractRate:Number(x.contractRate)||0,currentRate:Number(x.currentRate)||0,actualRate:Number(x.actualRate)||0,rate,volumes:Array.from({length:12},(_,m)=>Number(x.volumes?.[m])||0)}}):[];v.dataMode=v.dataMode||'demo';}
+ for(const v of d.versions){v.parameters=clone(v.parameters||d.parameters);for(const x of COST_DEFS)v.parameters[x[2]]={...defaults()[x[2]],...v.parameters[x[2]]};v.year=v.year||d.year;v.vatRate=v.vatRate??d.vatRate;v.vacationBasis=v.vacationBasis||d.vacationBasis;v.actualThroughMonth=Math.max(0,Math.min(12,Number.isInteger(Number(v.actualThroughMonth))?Number(v.actualThroughMonth):0));Object.assign(v,DataAdapter.moneyContext(v,{currency:d.currency,fxRate:d.fx}));v.bindings=v.bindings||{};v.manualCosts=v.manualCosts||{};v.manualPayments=v.manualPayments||{};v.drivers=v.drivers||{};for(const [k] of SERIES)v.drivers[k]=DataAdapter.monthlySeries(v.drivers[k]);v.workItems=Array.isArray(v.workItems)?v.workItems.map((x,i)=>{const rate=DataAdapter.finiteNumber(x.actualRate??x.currentRate??x.contractRate??x.rate);const name=String(x.name||'Вид работ '+(i+1)),unit=String(x.unit||'ед.'),kq1=String(x.kq1||''),kq2=String(x.kq2||'');return{name,unit,kq1,kq2,stableKey:String(x.stableKey||DataAdapter.stableKey([kq1,kq2,name,unit])),matchRule:String(x.matchRule||'manual'),matchConfidence:DataAdapter.finiteNumber(x.matchConfidence),contractRate:DataAdapter.finiteNumber(x.contractRate),currentRate:DataAdapter.finiteNumber(x.currentRate),actualRate:DataAdapter.finiteNumber(x.actualRate),rate,volumes:DataAdapter.monthlySeries(x.volumes)}}):[];v.dataMode=v.dataMode||'demo';}
  }}
 }
 function seed(){
@@ -492,5 +537,4 @@ for(const el of document.querySelectorAll('.modalback'))el.addEventListener('cli
 window.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modalback.show').forEach(el=>el.classList.remove('show'));});
 window.addEventListener('beforeunload',e=>{if(dirty&&editMode){e.preventDefault();e.returnValue='';}});
 init();
-
 </script></body></html>
