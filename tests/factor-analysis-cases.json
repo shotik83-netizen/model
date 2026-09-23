@@ -1,0 +1,8 @@
+[
+  {"name":"Рост объёма","q0":10,"p0":100,"q1":12,"p1":100,"expectedVolume":200,"expectedPrice":0},
+  {"name":"Рост цены","q0":10,"p0":100,"q1":10,"p1":120,"expectedVolume":0,"expectedPrice":200},
+  {"name":"Одновременное изменение","q0":10,"p0":100,"q1":12,"p1":120,"expectedVolume":200,"expectedPrice":240},
+  {"name":"Новая строка","q0":0,"p0":null,"q1":5,"p1":80,"expectedVolume":400,"expectedPrice":0},
+  {"name":"Исключённая строка","q0":4,"p0":75,"q1":0,"p1":null,"expectedVolume":-300,"expectedPrice":0}
+]
+
