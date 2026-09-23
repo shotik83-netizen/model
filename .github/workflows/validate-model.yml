@@ -17,5 +17,7 @@ jobs:
         run: python3 scripts/build_standalone.py --check
       - name: Test data adapter and calculation core
         run: node tests/test_core.js
+      - name: Reconcile economy and cash-flow formulas
+        run: node tests/test_economy.js
       - name: Validate data contract, workbooks and factor bridge
         run: python3 scripts/validate_model.py
