@@ -38,6 +38,33 @@ function compareWorkItems(baseItems=[],currentItems=[],{baseFx=1,currentFx=1}={}
  return{rows,total:aggregateFactors(rows)};
 }
 function residualFactor({base=0,current=0,explained=0}={}){return number(current)-number(base)-number(explained);}
+function aggregateContractor(entries=[]){
+ const keys=['revenue','direct','indirect','costs','profit','inflow','operatingPayments','vatPay','ncf','cumulative'];
+ const errors=[],seenIds=new Set(),seenNumbers=new Set();
+ if(!entries.length)errors.push('Выберите хотя бы один договор.');
+ const first=entries[0]?.version,year=first?.year,currency=first?.currency;
+ for(const item of entries){
+  const label=String(item.number||item.contractId||'Договор'),id=String(item.contractId||''),normalizedNumber=label.trim().toLocaleLowerCase('ru-RU'),v=item.version||{},r=item.result||{};
+  if(!id||seenIds.has(id))errors.push(label+': повторяется или отсутствует идентификатор договора.');seenIds.add(id);
+  if(!normalizedNumber||seenNumbers.has(normalizedNumber))errors.push(label+': повторяется или отсутствует номер договора.');seenNumbers.add(normalizedNumber);
+  if(v.portfolioYearMissing||!Number.isInteger(v.year)||v.year!==year)errors.push(label+': год версии отличается или не задан.');
+  if(!v.currency||v.currency!==currency)errors.push(label+': валюта версии отличается или не задана.');
+  for(const key of keys)if(!Array.isArray(r[key])||r[key].length!==12||r[key].some(x=>typeof x!=='number'||!Number.isFinite(x)))errors.push(label+': отсутствует помесячный показатель '+key+'.');
+ }
+ if(errors.length)return{status:'blocked',errors,year:null,currency:null,totals:null,lines:[]};
+ const totals=Object.fromEntries(keys.map(key=>[key,Array.from({length:12},(_,m)=>sum(entries.map(item=>item.result[key][m])))]));
+ let balance=0;totals.cumulative=totals.ncf.map(value=>balance+=value);
+ if(Object.values(totals).some(values=>values.some(value=>!Number.isFinite(value))))return{status:'blocked',errors:['Сумма договоров выходит за допустимый числовой диапазон.'],year:null,currency:null,totals:null,lines:[]};
+ const control=Array.from({length:12},(_,m)=>totals.cumulative[m]-sum(entries.map(item=>item.result.cumulative[m])));
+ if(control.some(value=>!Number.isFinite(value)))return{status:'blocked',errors:['Не удалось сверить накопленный поток по договорам.'],year:null,currency:null,totals:null,lines:[]};
+ const mismatch=control.findIndex((value,m)=>Math.abs(value)>Math.max(1e-5,Math.abs(totals.cumulative[m])*1e-12));
+ if(mismatch>=0)return{status:'blocked',errors:[`Месяц ${mismatch+1}: накопленный поток не совпадает с суммой выбранных договоров.`],year:null,currency:null,totals:null,lines:[]};
+ const lines=entries.map(item=>({contractId:item.contractId,number:item.number,versionId:item.version.id,versionName:item.version.name,revenue:sum(item.result.revenue),costs:sum(item.result.costs),profit:sum(item.result.profit),ncf:sum(item.result.ncf)}));
+ const warnings=[];
+ if(entries.some(item=>item.version.dataMode==='demo'))warnings.push('В свод включена версия с демонстрационными данными.');
+ if(currency!=='RUB'&&entries.some(item=>!(Number(item.version.fxRate)>0)))warnings.push('Курс к RUB не указан: рублёвый эквивалент не рассчитывается.');
+ return{status:'ready',errors:[],warnings,year,currency,totals,lines,control};
+}
 function calculateModel(v,costDefs){
  const d=v.drivers,params=v.parameters,p=k=>params[k]?.enabled?number(params[k].value):0,rows={};costDefs.forEach(x=>rows[x[2]]=Array(12).fill(0));
  const workRevenue=Array.from({length:12},(_,m)=>sum((v.workItems||[]).map(x=>number(x.volumes?.[m])*number(x.rate))));
@@ -64,6 +91,6 @@ function calculateModel(v,costDefs){
  const inflow=d.payments.map((x,m)=>x+d.advances[m]+d.factoring[m]-d.advanceOffset[m]),ncf=inflow.map((x,m)=>x-operatingPayments[m]-vatPay[m]);let acc=0;const cumulative=ncf.map(x=>acc+=x);
  return{rows,revenue,direct,indirect,costs,profit,payments,directPayments,indirectPayments,outputVat,advanceVat,offsetVat,inputVat,vatPay,operatingPayments,inflow,ncf,cumulative,deferred};
 }
-return{number,sum,toRub,fromRub,factorBridge,aggregateFactors,topWorkFactors,compareWorkItems,residualFactor,calculateModel};
+return{number,sum,toRub,fromRub,factorBridge,aggregateFactors,topWorkFactors,compareWorkItems,residualFactor,aggregateContractor,calculateModel};
 })();
 if(typeof module!=='undefined'&&module.exports)module.exports=CalculationCore;
