@@ -31,6 +31,7 @@ python3 scripts/build_standalone.py --check
 node tests/test_core.js
 node tests/test_economy.js
 python3 tests/test_excel_audit.py
+python3 tests/test_excel_compare.py
 python3 scripts/validate_model.py
 ```
 
@@ -41,5 +42,13 @@ python3 scripts/audit_excel_reference.py /path/to/model.xlsx --year 2026
 ```
 
 Проверка сопоставляет сохранённые месячные балансы БДР и БДДС внутри книги. Она не пересчитывает Excel и не доказывает равенство приложения исходной книге; для этого ещё нужны одинаковые входные данные, период и правила статей.
+
+Предварительный помесячный отчёт можно построить локально из исходной книги и файла подрядчика (оба читаются без записи):
+
+```bash
+python3 scripts/compare_excel_app.py /private/model.xlsx data/contractors/c1/models/model-2026-09-22.xlsx --output /private/reconciliation.md
+```
+
+Отчёт содержит 12 месяцев по восьми показателям, контроль происхождения и перечень препятствий для сравнения; он **не сертифицирует равенство формул**. Его числовое содержание следует хранить отдельно от публичного репозитория. Для формирования снимка необходим Node.js.
 
 SharePoint получает только автономный `index.html`; файлы разработки и тесты в эксплуатационном контуре не выполняются.
