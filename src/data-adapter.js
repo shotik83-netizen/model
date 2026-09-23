@@ -16,14 +16,25 @@ function stableKey(parts){
  for(let i=0;i<source.length;i++){hash^=source.charCodeAt(i);hash=Math.imul(hash,16777619);}
  return'auto-'+(hash>>>0).toString(16).padStart(8,'0');
 }
+function normalizeMaterialKinds(value){
+ if(!value||typeof value!=='object'||Array.isArray(value))return{};
+ return Object.fromEntries(Object.entries(value).slice(0,5000).filter(([key,kind])=>/^[A-Z0-9-]{1,48}$/.test(key)&&typeof kind==='string'&&kind.trim()&&kind.trim().length<=80).map(([key,kind])=>[key,kind.trim()]));
+}
+function setMaterialKind(value,code,kind){
+ const key=normalizedCode(code),name=String(kind??'').trim();
+ if(!/^[A-Z0-9-]{1,48}$/.test(key)||name.length>80)throw Error('Некорректный код KQ-2 или вид материала.');
+ const updated=normalizeMaterialKinds(value);
+ if(name)updated[key]=name;else delete updated[key];
+ return updated;
+}
 function boqRecord(value={},index=0){
  const kqCode=normalizedCode(value.kqCode||value.code),name=String(value.name||kqCode||'Позиция BOQ').trim();
- return{sourceKind:'boq',sourceRow:finiteNumber(value.sourceRow,index+1),sourceKey:String(value.sourceKey||stableKey(['boq',value.itemCode||'',kqCode,name,value.unit||'',index])),itemCode:String(value.itemCode||''),name,unit:String(value.unit||'ед.'),kqCode,kqName:String(value.kqName||name),quantity:finiteNumber(value.quantity),laborHours:finiteNumber(value.laborHours),machineHours:finiteNumber(value.machineHours),cost:finiteNumber(value.cost)};
+ return{sourceKind:'boq',sourceRow:finiteNumber(value.sourceRow,index+1),sourceKey:String(value.sourceKey||stableKey(['boq',value.itemCode||'',kqCode,name,value.unit||'',index])),itemCode:String(value.itemCode||''),name,unit:String(value.unit||'ед.'),kqCode,kqName:String(value.kqName||name),quantity:finiteNumber(value.quantity),laborHours:finiteNumber(value.laborHours),machineHours:finiteNumber(value.machineHours),cost:finiteNumber(value.cost),materialsCost:value.materialsCost==null?null:finiteNumber(value.materialsCost)};
 }
 function aggregateKq2(records=[]){
  const groups=new Map();
- records.map(boqRecord).forEach(row=>{if(!row.kqCode)return;const current=groups.get(row.kqCode)||{code:row.kqCode,name:row.kqName,unit:row.unit,quantity:0,laborHours:0,machineHours:0,cost:0,sourceRows:0,sourceKeys:[]};current.quantity+=row.quantity;current.laborHours+=row.laborHours;current.machineHours+=row.machineHours;current.cost+=row.cost;current.sourceRows++;current.sourceKeys.push(row.sourceKey);groups.set(row.kqCode,current);});
- return[...groups.values()].map(row=>({...row,stableKey:stableKey(['kq2',row.code]),rate:row.quantity?row.cost/row.quantity:0})).sort((a,b)=>b.cost-a.cost);
+ records.map(boqRecord).forEach(row=>{if(!row.kqCode)return;const current=groups.get(row.kqCode)||{code:row.kqCode,name:row.kqName,unit:row.unit,quantity:0,laborHours:0,machineHours:0,cost:0,materialsCost:0,materialsRows:0,sourceRows:0,sourceKeys:[]};current.quantity+=row.quantity;current.laborHours+=row.laborHours;current.machineHours+=row.machineHours;current.cost+=row.cost;if(row.materialsCost!==null){current.materialsCost+=row.materialsCost;current.materialsRows++;}current.sourceRows++;current.sourceKeys.push(row.sourceKey);groups.set(row.kqCode,current);});
+ return[...groups.values()].map(row=>({...row,materialsCost:row.materialsRows?row.materialsCost:null,stableKey:stableKey(['kq2',row.code]),rate:row.quantity?row.cost/row.quantity:0})).sort((a,b)=>b.cost-a.cost);
 }
 function ksgRecord(value={},index=0){
  const volumes=monthlySeries(value.volumes),kqCode=normalizedCode(value.kqCode||value.kq2),name=String(value.name||'Работа КСГ').trim(),unit=String(value.unit||'ед.');
@@ -39,6 +50,6 @@ function workChainControl(estimate=[],items=[]){
  const rows=estimate.map(row=>{const schedule=scheduled.get(normalizedCode(row.code))||{quantity:0,cost:0,rows:0};return{...row,scheduledQuantity:schedule.quantity,scheduledCost:schedule.cost,quantityVariance:schedule.quantity-finiteNumber(row.quantity),scheduleRows:schedule.rows};});
  return{rows,boqCost:rows.reduce((total,row)=>total+finiteNumber(row.cost),0),scheduledCost:rows.reduce((total,row)=>total+finiteNumber(row.scheduledCost),0),contractQuantity:rows.reduce((total,row)=>total+finiteNumber(row.quantity),0),scheduledQuantity:rows.reduce((total,row)=>total+finiteNumber(row.scheduledQuantity),0),matchedRows:items.filter(row=>row.matchRule==='exact').length,unmatchedRows:items.filter(row=>row.matchRule!=='exact').length};
 }
-return{CURRENCY_CODES,finiteNumber,monthlySeries,normalizedCode,moneyContext,stableKey,boqRecord,aggregateKq2,ksgRecord,linkKsgToKq2,workChainControl};
+return{CURRENCY_CODES,finiteNumber,monthlySeries,normalizedCode,moneyContext,stableKey,normalizeMaterialKinds,setMaterialKind,boqRecord,aggregateKq2,ksgRecord,linkKsgToKq2,workChainControl};
 })();
 if(typeof module!=='undefined'&&module.exports)module.exports=DataAdapter;
