@@ -156,7 +156,7 @@ def validate_deployable_html() -> None:
     text = html.read_text(encoding="utf-8")
     if "<script src=" in text.lower() or "<link rel=\"stylesheet\" href=\"http" in text.lower():
         fail("index.html: найдена внешняя исполняемая зависимость")
-    for marker in ("APP='financial-economic-model'", "DEFAULT_MAPPING", "function calcModel"):
+    for marker in ("const DataAdapter=", "const CalculationCore=", "APP='financial-economic-model'", "DEFAULT_MAPPING", "function calcModel"):
         if marker not in text:
             fail(f"index.html: отсутствует контрольный маркер {marker}")
 
