@@ -1,0 +1,50 @@
+"""Guard against publishing synthetic pilot output as confirmed financial fact."""
+import sys
+import json
+import subprocess
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
+from compare_excel_app import load_version, normalized
+
+root = Path(__file__).resolve().parents[1]
+book = Path(sys.argv[1]) if len(sys.argv) > 1 else root / 'data/contractors/c1/models/model-2026-09-22.xlsx'
+pilot, version = load_version(book, 'd_pilot_4700134128', 'v_pilot_2026')
+assert pilot['number'] == version['workSourceMeta']['sourceContractNumber'] == '4700134128'
+assert pilot['sourceIdentityConfirmed']
+assert pilot['sourceIdentities']['primary_documents']['contractNumber'] == 'НКНХ.10321'
+assert pilot['sourceIdentities']['payments']['contractNumber'] == '120001358474'
+assert version['workSourceMeta']['primaryPaymentMatches'] >= 3
+assert version['dataMode'] == 'source_partial'
+assert version['currency'] == 'USD'
+assert len(version['workItems']) > 100
+assert sum(version['drivers']['ksgRevenue']) > 0
+assert version['actualThroughMonth'] == 0 and version['primaryIdentityConfirmed']
+assert len(version['drivers']['ks2Accepted']) == 12
+assert version['workSourceMeta']['unmatchedRows'] == 0
+assert version['workSourceMeta']['ignoredRows'] == 32
+assert version['workSourceMeta']['primaryRows'] == 28
+assert abs(version['drivers']['primaryExecuted'][0] - 1421531.78) < 0.01
+assert version['workSourceMeta']['primaryCacheDifferences'] == [8, 9, 10, 11, 12]
+assert version['workSourceMeta']['resourceCacheDifferences'] == [8, 9, 10, 11, 12]
+assert len(version['drivers']['primaryExecuted']) == 12
+assert abs(version['drivers']['primaryExecuted'][7] - 1306310.04) < 0.01
+assert len(version['personnelCategories']['direct']) == 5
+assert len(version['personnelCategories']['indirect']) == 5
+calculated = subprocess.run(['node', str(root / 'scripts/app_model_snapshot.js')],
+                            input=json.dumps(normalized(version, pilot, root)),
+                            text=True, capture_output=True, check=True)
+rows = json.loads(calculated.stdout)['rows']
+assert abs(rows['payroll'][0] - 382981.96414333646) < 0.001
+assert abs(rows['insurance'][0] - 101503.97318406111) < 0.001
+assert version['workSourceMeta']['paymentRows'] == 13
+assert round(sum(version['drivers']['payments']), 2) == 2720285.8
+assert sum(version['drivers']['advances']) > 0
+assert version['paymentActualMonths'][:6] == [True] * 6
+assert len(version['workSourceMeta']['blockers']) == 2
+assert version['workSourceMeta']['resourceForecastPolicy'].startswith('Август–декабрь')
+for old_id, old_version in [('d1', 'v2'), ('d2', 'v_mucuctuh3k83')]:
+    _, old = load_version(book, old_id, old_version)
+    assert old['dataMode'] == 'unconfigured'
+    assert all(not any(values) for values in old['drivers'].values() if isinstance(values, list))
+print('PILOT READINESS GUARD: OK')

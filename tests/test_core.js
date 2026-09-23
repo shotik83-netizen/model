@@ -43,13 +43,21 @@ assert.equal(CalculationCore.aggregateFactors([...ranked.visible,ranked.other]).
 assert.equal(CalculationCore.residualFactor({base:100,current:145,explained:30}),15,'residual factor');
 
 const boqRecords=[
- {kqCode:'KQ.01',kqName:'Земляные работы',quantity:10,laborHours:20,machineHours:3,cost:1000},
- {kqCode:'KQ-01',kqName:'Земляные работы',quantity:5,laborHours:8,machineHours:2,cost:600},
+ {kqCode:'KQ.01',kqName:'Земляные работы',quantity:10,laborHours:20,machineHours:3,cost:1000,materialsCost:70},
+ {kqCode:'KQ-01',kqName:'Земляные работы',quantity:5,laborHours:8,machineHours:2,cost:600,materialsCost:30},
  {kqCode:'KQ 02',kqName:'Монтаж',quantity:4,laborHours:12,machineHours:1,cost:800}
 ];
 const kq2=DataAdapter.aggregateKq2(boqRecords);
 assert.equal(kq2.length,2,'KQ-2 groups');
 assert.equal(kq2.reduce((total,row)=>total+row.cost,0),2400,'BOQ cost conservation');
+assert.equal(kq2.find(row=>row.code==='KQ-01').materialsCost,100,'materials remain separate and aggregate by KQ-2');
+assert.equal(kq2.find(row=>row.code==='KQ-02').materialsCost,null,'missing materials data stays unavailable');
+assert.equal(DataAdapter.aggregateKq2([{kqCode:'KQ-03',cost:4,materialsCost:0}])[0].materialsCost,0,'explicit zero is distinct from missing materials');
+const materialKinds=DataAdapter.setMaterialKind({},'KQ.01','Металлоконструкции');
+assert.equal(JSON.parse(JSON.stringify(materialKinds))['KQ-01'],'Металлоконструкции','material kind persists in version JSON');
+assert.deepEqual(DataAdapter.setMaterialKind(materialKinds,'KQ-01',''),{},'clearing assignment removes kind');
+assert.equal(DataAdapter.normalizeMaterialKinds({'KQ-02':' Кабель ',bad:{name:'object'}})['KQ-02'],'Кабель','normalize imported kinds');
+assert.throws(()=>DataAdapter.setMaterialKind({},'KQ-01','x'.repeat(81)),/Некорректный/,'reject overlong material label');
 assert.equal(kq2.reduce((total,row)=>total+row.quantity,0),19,'BOQ quantity conservation');
 const workItems=DataAdapter.linkKsgToKq2([
  {workId:'w1',kqCode:'KQ-01',name:'Земляные работы',unit:'м3',plannedQuantity:15,volumes:[5,5,5]},
@@ -63,4 +71,22 @@ assert.equal(chain.boqCost,2400,'chain BOQ cost');
 assert.equal(chain.matchedRows,2,'chain matches');
 assert.equal(chain.unmatchedRows,1,'chain unmatched');
 assert.equal(chain.rows.find(row=>row.code==='KQ-01').quantityVariance,0,'KQ-01 volume control');
+const portfolioResult=(revenue,cost)=>({revenue:Array(12).fill(revenue),direct:Array(12).fill(cost),indirect:Array(12).fill(0),costs:Array(12).fill(cost),profit:Array(12).fill(revenue-cost),inflow:Array(12).fill(revenue),operatingPayments:Array(12).fill(cost),vatPay:Array(12).fill(0),ncf:Array(12).fill(revenue-cost),cumulative:Array.from({length:12},(_,m)=>(m+1)*(revenue-cost))});
+const portfolioEntries=[{contractId:'d1',number:'A1',version:{id:'v1',name:'Базовая',year:2026,currency:'USD',fxRate:0},result:portfolioResult(100,40)},{contractId:'d2',number:'A2',version:{id:'v2',name:'Текущая',year:2026,currency:'USD',fxRate:0},result:portfolioResult(30,10)}];
+const portfolio=CalculationCore.aggregateContractor(portfolioEntries);
+assert.equal(portfolio.status,'ready','same currency contracts can be aggregated in contract currency');
+assert.equal(portfolio.currency,'USD','aggregation retains source currency');
+assert.equal(portfolio.totals.revenue[0],130,'revenue is sum of selected contracts');
+assert.equal(portfolio.totals.cumulative[11],960,'cash accumulation is recomputed from combined NCF');
+assert.ok(portfolio.control.every(x=>x===0),'monthly portfolio cash reconciles to contract results');
+assert.ok(portfolio.warnings.some(x=>x.includes('Курс')),'missing FX warns without inventing RUB total');
+assert.equal(CalculationCore.aggregateContractor([{...portfolioEntries[1],version:{...portfolioEntries[1].version,currency:'RUB'}} ,portfolioEntries[0]]).status,'blocked','mixed currencies cannot be summed');
+assert.equal(CalculationCore.aggregateContractor([{...portfolioEntries[1],version:{...portfolioEntries[1].version,year:2027}},portfolioEntries[0]]).status,'blocked','different years cannot be summed');
+assert.equal(CalculationCore.aggregateContractor([{...portfolioEntries[1],version:{...portfolioEntries[1].version,portfolioYearMissing:true}},portfolioEntries[0]]).status,'blocked','inferred default year cannot be silently merged');
+assert.equal(CalculationCore.aggregateContractor([{...portfolioEntries[1],number:'A1'},portfolioEntries[0]]).status,'blocked','duplicate contract numbers cannot be summed');
+assert.equal(CalculationCore.aggregateContractor([]).status,'blocked','empty portfolio does not produce zero total');
+const giantResult=portfolioResult(0,0);for(const key of ['revenue','profit','inflow','ncf'])giantResult[key][0]=1e308;giantResult.cumulative.fill(1e308);
+assert.equal(CalculationCore.aggregateContractor(portfolioEntries.map(item=>({...item,result:giantResult}))).status,'blocked','arithmetic overflow cannot appear as a portfolio total');
+const inconsistent=portfolioResult(30,10);inconsistent.cumulative[5]+=10;
+assert.match(CalculationCore.aggregateContractor([portfolioEntries[0],{...portfolioEntries[1],result:inconsistent}]).errors[0],/Месяц 6/,'monthly cash mismatch blocks portfolio');
 console.log('CALCULATION CORE TESTS: OK');
