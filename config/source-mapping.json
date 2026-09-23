@@ -13,7 +13,7 @@
     "boq": {
       "enabled": true,
       "required": true,
-      "path": "data/contractors/{contractorId}/sources/boq.xlsx",
+      "path": "data/sources/boq.xlsx",
       "sheetAliases": ["BOQ", "Ведомость объемов", "Ведомость объёмов"],
       "headerRow": { "mode": "auto", "fallback": 9, "searchRows": 30 },
       "requiredFields": ["item_code", "item_name", "unit", "contract_quantity"],
@@ -35,7 +35,7 @@
     "ksg": {
       "enabled": true,
       "required": true,
-      "path": "data/contractors/{contractorId}/sources/volume-schedule.xlsx",
+      "path": "data/sources/ksg.xlsx",
       "sheetAliases": ["КСГ", "Календарный график", "График производства"],
       "headerRow": { "mode": "auto", "fallback": 2, "searchRows": 20 },
       "dynamicColumns": { "mode": "dateHeaders", "grain": "month" },
