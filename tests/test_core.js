@@ -35,6 +35,11 @@ assert.equal(workComparison.rows.find(row=>row.key==='earth').price,48,'work pri
 assert.equal(workComparison.rows.find(row=>row.key==='new').status,'new','new work status');
 assert.equal(workComparison.rows.find(row=>row.key==='removed').status,'removed','removed work status');
 assert.ok(Math.abs(workComparison.total.control)<1e-9,'work comparison control');
+const ranked=CalculationCore.topWorkFactors(Array.from({length:12},(_,i)=>({key:`w${i}`,label:`Работа ${i}`,base:i*10,current:i*10+2,volume:1,price:1,variance:2,control:0})),10);
+assert.equal(ranked.visible.length,10,'show only ten key works');
+assert.equal(ranked.hiddenCount,2,'retain count of secondary works');
+assert.equal(ranked.other.base,10,'aggregate secondary base without loss');
+assert.equal(CalculationCore.aggregateFactors([...ranked.visible,ranked.other]).variance,ranked.total.variance,'retain full factor bridge');
 assert.equal(CalculationCore.residualFactor({base:100,current:145,explained:30}),15,'residual factor');
 
 const boqRecords=[
