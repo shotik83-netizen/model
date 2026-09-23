@@ -21,5 +21,7 @@ jobs:
         run: node tests/test_economy.js
       - name: Test source Excel audit without private workbook
         run: python3 tests/test_excel_audit.py
+      - name: Guard preliminary Excel/app comparison
+        run: python3 tests/test_excel_compare.py
       - name: Validate data contract, workbooks and factor bridge
         run: python3 scripts/validate_model.py
