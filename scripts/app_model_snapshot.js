@@ -5,7 +5,7 @@ const vm = require('vm');
 const path = require('path');
 const root = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'src/app.js'), 'utf8');
-const match = source.match(/const COST_DEFS=(\[[\s\S]*?\]);\s*const SOURCE_KEYS=/);
+const match = source.match(/const COST_DEFS=(\[[\s\S]*?\]);\s*const PERCENT_RATE_METHODS=/);
 if (!match) throw new Error('COST_DEFS missing from app.js');
 const costDefs = vm.runInNewContext(match[1]);
 const core = require('../src/calculation-core.js');

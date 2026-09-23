@@ -63,15 +63,23 @@ def load_version(path, contract_id, version_id):
         target = next(r.get("Target") for r in rels if r.get("Id") == rid)
         sheet_path = target.lstrip("/") if target.startswith("/") else "xl/" + target
         xml = ET.fromstring(book.read(sheet_path))
-        cell = xml.find(".//x:sheetData/x:row/x:c[@r='A2']", ns)
-        if cell is None:
+        cells = xml.findall(".//x:sheetData/x:row/x:c", ns)
+        cells = [cell for cell in cells if cell.get('r', '').startswith('A') and cell.get('r') != 'A1']
+        if not cells:
             raise ValueError("_DATA!A2 is absent")
-        if cell.get("t") == "s":
-            strings = ET.fromstring(book.read("xl/sharedStrings.xml"))
-            index = int(cell.find("x:v", ns).text)
-            payload_text = "".join(strings.findall("x:si", ns)[index].itertext())
-        else:
-            payload_text = cell.find("x:is/x:t", ns).text if cell.get("t") == "inlineStr" else cell.find("x:v", ns).text
+        strings = None
+        parts = []
+        for cell in cells:
+            if cell.get("t") == "s":
+                if strings is None:
+                    strings = ET.fromstring(book.read("xl/sharedStrings.xml"))
+                index = int(cell.find("x:v", ns).text)
+                parts.append("".join(strings.findall("x:si", ns)[index].itertext()))
+            elif cell.get("t") == "inlineStr":
+                parts.append("".join(cell.find("x:is", ns).itertext()))
+            else:
+                parts.append(cell.find("x:v", ns).text)
+        payload_text = "".join(parts)
         payload = json.loads(payload_text)
     for contract in payload["contractor"]["contracts"]:
         if contract["id"] == contract_id:
@@ -89,7 +97,7 @@ def normalized(version, contract, root):
                     "cash": k not in {"vacation", "indirectVacation"}, "vat": k not in NO_VAT}
                 for k in names}
     # Browser defaults supply missing settings; recover exactly from its literal.
-    if not re.search(r"const COST_DEFS=(\[[\s\S]*?\]);\s*const SOURCE_KEYS=", source):
+    if not re.search(r"const COST_DEFS=(\[[\s\S]*?\]);\s*const PERCENT_RATE_METHODS=", source):
         raise ValueError("app COST_DEFS not found")
     # Array has JavaScript strings, integers and no expressions; convert through Node snapshot helper.
     # Parameter values present in saved versions are authoritative; missing ones are ineligible for parity.
@@ -97,8 +105,9 @@ def normalized(version, contract, root):
     if set(defaults) - set(params):
         raise ValueError("saved version has missing calculation parameters")
     params = {k: {**defaults[k], **params[k]} for k in defaults}
-    d = {key: (version.get("drivers", {}).get(key) or [0] * 12) for key in SERIES}
-    if any(len(x) != 12 for x in d.values()):
+    d = {**version.get("drivers", {}),
+         **{key: (version.get("drivers", {}).get(key) or [0] * 12) for key in SERIES}}
+    if any(len(x) != 12 for x in d.values() if isinstance(x, list)):
         raise ValueError("driver series length differs from 12")
     return {**version, "year": version.get("year", contract.get("year", 2026)),
             "vatRate": version.get("vatRate", contract.get("vatRate", 22)),
