@@ -3,6 +3,29 @@ const number=value=>{const result=Number(value);return Number.isFinite(result)?r
 const sum=values=>values.reduce((total,value)=>total+number(value),0);
 const toRub=(amount,fxRate)=>{const rate=number(fxRate);return rate>0?number(amount)*rate:NaN;};
 const fromRub=(amount,fxRate)=>{const rate=number(fxRate);return rate>0?number(amount)/rate:NaN;};
+function rateInContractCurrency(amount,rateCurrency,contractCurrency,fxRate){
+ const value=Number(amount),source=String(rateCurrency||contractCurrency||'RUB').toUpperCase(),target=String(contractCurrency||'RUB').toUpperCase();
+ if(!Number.isFinite(value))throw Error('Некорректная ставка затрат.');
+ if(source===target)return value;
+ const fx=Number(fxRate);
+ if(!Number.isFinite(fx)||fx<=0)throw Error(`Для ставки ${source} → ${target} требуется положительный курс к RUB.`);
+ if(source==='RUB'&&target==='USD')return value/fx;
+ if(source==='USD'&&target==='RUB')return value*fx;
+ throw Error(`Для ставки ${source} → ${target} не задан способ пересчёта.`);
+}
+function recognizeKsgSchedule(smr,mtr,weights=[.7,.18,.12]){
+ if(!Array.isArray(smr)||!Array.isArray(mtr)||smr.length!==mtr.length||weights.length!==3||Math.abs(sum(weights)-1)>1e-12)throw Error('Некорректный график выполнения КСГ.');
+ return smr.map((_,i)=>sum(weights.map((weight,lag)=>weight*(number(smr[i-lag])+number(mtr[i-lag])))));
+}
+function ksgAcceptanceSchedule(smr,mtr,weights=[.7,.18,.12],documentationDelay=[0,0,0],actLag=1){
+ if(!Array.isArray(smr)||!Array.isArray(mtr)||smr.length!==mtr.length||weights.length!==3||documentationDelay.length!==3||!Number.isInteger(actLag)||actLag<0||actLag>12||Math.abs(sum(weights)-1)>1e-12||weights.some(x=>x<0||x>1)||documentationDelay.some(x=>x<0||x>1))throw Error('Некорректный регламент выполнения или КС-2.');
+ const execution=recognizeKsgSchedule(smr,mtr,weights),accepted=Array(smr.length+actLag+4).fill(0);
+ for(let i=0;i<smr.length;i++)for(let stage=0;stage<3;stage++){
+  const amount=(number(smr[i])+number(mtr[i]))*weights[stage],at=i+stage+actLag,late=documentationDelay[stage];
+  accepted[at]+=amount*(1-late);accepted[at+1]+=amount*late;
+ }
+ return{execution,accepted};
+}
 function factorBridge({q0=0,p0=null,q1=0,p1=null}={}){
  q0=number(q0);q1=number(q1);
  if(p0==null&&p1==null)return{status:'unmatched',base:0,current:0,volume:0,price:0,variance:0,control:NaN};
@@ -66,20 +89,23 @@ function aggregateContractor(entries=[]){
  return{status:'ready',errors:[],warnings,year,currency,totals,lines,control};
 }
 function calculateModel(v,costDefs){
- const d=v.drivers,params=v.parameters,p=k=>params[k]?.enabled?number(params[k].value):0,rows={};costDefs.forEach(x=>rows[x[2]]=Array(12).fill(0));
+ const d=v.drivers,params=v.parameters,percentageMethods=new Set(['rate','percentRevenue','percentPayroll','percentDirect','materials']),methodByKey=new Map(costDefs.map(x=>[x[2],x[3]])),p=k=>{const entry=params[k];if(!entry?.enabled)return 0;return percentageMethods.has(entry.method||methodByKey.get(k))?number(entry.value):rateInContractCurrency(entry.value,entry.rateCurrency,v.currency,v.fxRate);},rows={};costDefs.forEach(x=>rows[x[2]]=Array(12).fill(0));
  const workRevenue=Array.from({length:12},(_,m)=>sum((v.workItems||[]).map(x=>number(x.volumes?.[m])*number(x.rate))));
- const calculatedRevenue=d.physicalVolume.map((quantity,m)=>v.workItems?.length?workRevenue[m]:quantity&&d.boqRate[m]?quantity*d.boqRate[m]:d.revenue[m]);
+ const calculatedRevenue=d.physicalVolume.map((quantity,m)=>v.revenueBasis==='ksg'&&Array.isArray(d.ksgRevenue)?number(d.ksgRevenue[m]):v.workItems?.length?workRevenue[m]:quantity&&d.boqRate[m]?quantity*d.boqRate[m]:d.revenue[m]);
  const revenue=calculatedRevenue.map((x,m)=>x+d.otherRevenue[m]);
  const payrollAt=(k,people,m)=>!params[k].enabled?0:params[k].method==='manual'?(v.manualCosts[k]?.[m]??p(k)):people*p(k);
- const annualDirect=sum(d.directPeople.map((x,m)=>payrollAt('payroll',x,m))),annualIndirect=sum(d.indirectPeople.map((x,m)=>payrollAt('indirectPayroll',x,m)));
+ const categories=(group,m)=>Array.isArray(v.personnelCategories?.[group])?v.personnelCategories[group].map(c=>({people:number(c.months?.[m]),wage:rateInContractCurrency(c.rate,c.currency||v.currency,v.currency,v.fxRate),insurance:number(c.insurance)})):null;
+ const categoryPayroll=(group,m)=>sum((categories(group,m)||[]).map(c=>c.people*c.wage));
+ const annualDirect=params.payroll.enabled?sum(d.directPeople.map((x,m)=>categories('direct',m)?categoryPayroll('direct',m):payrollAt('payroll',x,m))):0,annualIndirect=params.indirectPayroll.enabled?sum(d.indirectPeople.map((x,m)=>categories('indirect',m)?categoryPayroll('indirect',m):payrollAt('indirectPayroll',x,m))):0;
  for(let m=0;m<12;m++){
  const set=(k,amount)=>rows[k][m]=!params[k].enabled?0:params[k].method==='manual'?(v.manualCosts[k]?.[m]??p(k)):amount;
  const dp=d.directPeople[m],ip=d.indirectPeople[m],days=new Date(v.year,m+1,0).getDate(),tax=p('payrollTax')/100,itax=p('indirectTax')/100;
- const dw=set('payroll',dp*p('payroll')),iw=set('indirectPayroll',ip*p('indirectPayroll'));
- set('payrollTax',dw/(1-tax)*tax);set('insurance',(dw+rows.payrollTax[m])*p('insurance')/100);set('vacation',(v.vacationBasis==='annual'?annualDirect:dw)*p('vacation')/100);
- set('subcontract',revenue[m]*p('subcontract')/100);set('equipment',d.equipmentHours[m]*p('equipment'));set('scaffoldLabor',dp*.05*260*p('scaffoldLabor'));set('projectMaterials',d.materials[m]*p('projectMaterials')/100);set('consumables',(dw+rows.payrollTax[m]+rows.insurance[m])*p('consumables')/100);set('nrk',d.nrkVolume[m]*p('nrk'));
- set('indirectTax',iw/(1-itax)*itax);set('indirectInsurance',(iw+rows.indirectTax[m])*p('indirectInsurance')/100);set('indirectVacation',(v.vacationBasis==='annual'?annualIndirect:iw)*p('indirectVacation')/100);
- set('food',(dp+ip)*days*p('food'));set('housing',(dp+ip)*days*p('housing'));set('bus',Math.ceil(dp/45)*p('bus'));set('car',ip>0?6*p('car'):0);set('ppe',dp*p('ppe')/12);set('tickets',(dp*.25+ip*.16)*p('tickets'));set('permit',dp*.15*p('permit'));set('medical',(dp+ip)*p('medical'));set('vziz',(dp+ip)*p('vziz')/12);set('office',p('office'));set('warehouse',p('warehouse'));set('internet',p('internet'));set('waste',p('waste'));set('safety',dw*p('safety')/100);set('accident',(dp+ip)*p('accident')/12);
+ const directCategories=categories('direct',m),indirectCategories=categories('indirect',m);
+ const dw=set('payroll',directCategories?categoryPayroll('direct',m):dp*p('payroll')),iw=set('indirectPayroll',indirectCategories?categoryPayroll('indirect',m):ip*p('indirectPayroll'));
+ set('payrollTax',dw/(1-tax)*tax);set('insurance',directCategories?sum(directCategories.map(c=>c.people*c.wage*c.insurance/100))/(1-tax):(dw+rows.payrollTax[m])*p('insurance')/100);set('vacation',(v.vacationBasis==='annual'?annualDirect:dw)*p('vacation')/100);
+ set('subcontract',revenue[m]*p('subcontract')/100);set('equipment',d.equipmentHours[m]*p('equipment'));set('scaffoldLabor',(v.costSourceBasis?.scaffoldPeople?number(d.scaffoldPeople?.[m]):dp*.05)*260*p('scaffoldLabor'));if(v.costSourceBasis?.projectMaterialsForecast){if(!Array.isArray(d.ksgMaterialsRevenue)||!Number.isFinite(Number(v.costSourceBasis.materialMarkupPercent))||Number(v.costSourceBasis.materialMarkupPercent)<0)throw Error('Для прогноза материалов нужны МТР КСГ и наценка.');set('projectMaterials',d.ksgMaterialsRevenue[m]/(1+Number(v.costSourceBasis.materialMarkupPercent)/100));}else set('projectMaterials',d.materials[m]*p('projectMaterials')/100);set('consumables',(dw+rows.payrollTax[m]+rows.insurance[m])*p('consumables')/100);set('nrk',d.nrkVolume[m]*p('nrk'));
+ set('indirectTax',iw/(1-itax)*itax);set('indirectInsurance',indirectCategories?sum(indirectCategories.map(c=>c.people*c.wage*c.insurance/100))/(1-itax):(iw+rows.indirectTax[m])*p('indirectInsurance')/100);set('indirectVacation',(v.vacationBasis==='annual'?annualIndirect:iw)*p('indirectVacation')/100);
+ const livingPeople=v.costSourceBasis?.livingPeople?number(d.laborIntensity?.[m])+number(d.passivePeople?.[m])-number(d.scaffoldPeople?.[m]):dp+ip;set('food',livingPeople*days*p('food'));set('housing',livingPeople*days*p('housing'));set('bus',Math.ceil(dp/45)*p('bus'));set('car',ip>0?6*p('car'):0);set('ppe',dp*p('ppe')/12);set('tickets',(dp*.25+ip*.16)*p('tickets'));set('permit',dp*.15*p('permit'));set('medical',(dp+ip)*p('medical'));set('vziz',(dp+ip)*p('vziz')/12);set('office',p('office'));set('warehouse',p('warehouse'));set('internet',p('internet'));set('waste',p('waste'));set('safety',dw*p('safety')/100);set('accident',(dp+ip)*p('accident')/12);
  for(const x of costDefs)if(x[3]==='manual')set(x[2],p(x[2]));
  const base=['payroll','payrollTax','insurance','vacation','subcontract','scaffoldLabor','consumables','nrk','otherDirect'].reduce((s,k)=>s+rows[k][m],0);set('otherIndirect',base*p('otherIndirect')/100);
  }
@@ -87,10 +113,11 @@ function calculateModel(v,costDefs){
  const direct=aggregate(rows,'direct'),indirect=aggregate(rows,'indirect'),costs=aggregate(rows),profit=revenue.map((x,m)=>x-costs[m]),payments={},vat=v.vatRate/100,inputVat=Array(12).fill(0);let deferred=0;
  for(const x of costDefs){const k=x[2],param=params[k];payments[k]=Array(12).fill(0);if(v.manualPayments[k]){payments[k]=v.manualPayments[k].slice();}else if(param.enabled&&param.cash){for(let m=0;m<12;m++){const amount=rows[k][m]*(param.vat?1+vat:1),to=m+(param.lag||0);if(to>11){deferred+=amount;continue;}payments[k][to]+=amount;}}if(param.vat)payments[k].forEach((amount,m)=>inputVat[m]+=amount/(1+vat)*vat);}
  const operatingPayments=aggregate(payments),directPayments=aggregate(payments,'direct'),indirectPayments=aggregate(payments,'indirect');
- const outputVat=d.payments.map(x=>x/(1+vat)*vat),advanceVat=d.advances.map(x=>x/(1+vat)*vat),offsetVat=d.advanceOffset.map(x=>-x/(1+vat)*vat),vatPay=outputVat.map((x,m)=>Math.max(0,x+advanceVat[m]+offsetVat[m]-inputVat[m]));
+ const documentedVat=(amount,series,m)=>v.paymentActualMonths?.[m]&&Array.isArray(d[series])&&Number.isFinite(Number(d[series][m]))?Number(d[series][m]):amount/(1+vat)*vat;
+ const outputVat=d.payments.map((x,m)=>documentedVat(x,'paymentVat',m)),advanceVat=d.advances.map((x,m)=>documentedVat(x,'advanceVat',m)),offsetVat=d.advanceOffset.map(x=>-x/(1+vat)*vat),vatPay=outputVat.map((x,m)=>Math.max(0,x+advanceVat[m]+offsetVat[m]-inputVat[m]));
  const inflow=d.payments.map((x,m)=>x+d.advances[m]+d.factoring[m]-d.advanceOffset[m]),ncf=inflow.map((x,m)=>x-operatingPayments[m]-vatPay[m]);let acc=0;const cumulative=ncf.map(x=>acc+=x);
  return{rows,revenue,direct,indirect,costs,profit,payments,directPayments,indirectPayments,outputVat,advanceVat,offsetVat,inputVat,vatPay,operatingPayments,inflow,ncf,cumulative,deferred};
 }
-return{number,sum,toRub,fromRub,factorBridge,aggregateFactors,topWorkFactors,compareWorkItems,residualFactor,aggregateContractor,calculateModel};
+return{number,sum,toRub,fromRub,rateInContractCurrency,recognizeKsgSchedule,ksgAcceptanceSchedule,factorBridge,aggregateFactors,topWorkFactors,compareWorkItems,residualFactor,aggregateContractor,calculateModel};
 })();
 if(typeof module!=='undefined'&&module.exports)module.exports=CalculationCore;
