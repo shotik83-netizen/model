@@ -28,6 +28,8 @@ python3 scripts/build_standalone.py
 
 ```bash
 python3 scripts/build_standalone.py --check
+node tests/test_core.js
+node tests/test_economy.js
 python3 scripts/validate_model.py
 ```
 
