@@ -64,7 +64,8 @@ def load_version(path, contract_id, version_id):
         sheet_path = target.lstrip("/") if target.startswith("/") else "xl/" + target
         xml = ET.fromstring(book.read(sheet_path))
         cells = xml.findall(".//x:sheetData/x:row/x:c", ns)
-        cells = [cell for cell in cells if cell.get('r', '').startswith('A') and cell.get('r') != 'A1']
+        cells = [cell for cell in cells if cell.get('r', '').startswith('A') and cell.get('r') != 'A1'
+                 and (cell.find('x:v', ns) is not None or cell.find('x:is', ns) is not None)]
         if not cells:
             raise ValueError("_DATA!A2 is absent")
         strings = None
