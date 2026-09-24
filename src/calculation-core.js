@@ -92,15 +92,16 @@ function aggregateContractor(entries=[]){
 }
 function calculateModel(v,costDefs){
  const d=v.drivers,params=v.parameters,percentageMethods=new Set(['rate','percentRevenue','percentPayroll','percentDirect','materials']),methodByKey=new Map(costDefs.map(x=>[x[2],x[3]])),p=k=>{const entry=params[k];if(!entry?.enabled)return 0;return percentageMethods.has(entry.method||methodByKey.get(k))?number(entry.value):rateInContractCurrency(entry.value,entry.rateCurrency,v.currency,v.fxRate);},rows={};costDefs.forEach(x=>rows[x[2]]=Array(12).fill(0));
+ for(const x of costDefs)if(params[x[2]]?.enabled&&params[x[2]].method==='driver'&&(!Array.isArray(d[params[x[2]].rateBasis])||d[params[x[2]].rateBasis].length!==12))throw Error('Для статьи «'+x[1]+'» выберите помесячный показатель ставки.');
  const workRevenue=Array.from({length:12},(_,m)=>sum((v.workItems||[]).map(x=>number(x.volumes?.[m])*number(x.rate))));
  const calculatedRevenue=d.physicalVolume.map((quantity,m)=>v.revenueBasis==='ksg'&&Array.isArray(d.ksgRevenue)?number(d.ksgRevenue[m]):v.workItems?.length?workRevenue[m]:quantity&&d.boqRate[m]?quantity*d.boqRate[m]:d.revenue[m]);
  const revenue=calculatedRevenue.map((x,m)=>x+d.otherRevenue[m]);
- const payrollAt=(k,people,m)=>!params[k].enabled?0:params[k].method==='manual'?(v.manualCosts[k]?.[m]??p(k)):people*p(k);
+ const payrollAt=(k,people,m)=>!params[k].enabled?0:params[k].method==='manual'?(v.manualCosts[k]?.[m]??p(k)):params[k].method==='driver'?number(d[params[k].rateBasis]?.[m])*p(k):params[k].method==='fixed'?p(k):people*p(k);
  const categories=(group,m)=>Array.isArray(v.personnelCategories?.[group])?v.personnelCategories[group].map(c=>({people:number(c.months?.[m]),wage:rateInContractCurrency(c.rate,c.currency||v.currency,v.currency,v.fxRate),insurance:number(c.insurance)})):null;
  const categoryPayroll=(group,m)=>sum((categories(group,m)||[]).map(c=>c.people*c.wage));
  const annualDirect=params.payroll.enabled?sum(d.directPeople.map((x,m)=>categories('direct',m)?categoryPayroll('direct',m):payrollAt('payroll',x,m))):0,annualIndirect=params.indirectPayroll.enabled?sum(d.indirectPeople.map((x,m)=>categories('indirect',m)?categoryPayroll('indirect',m):payrollAt('indirectPayroll',x,m))):0;
  for(let m=0;m<12;m++){
- const set=(k,amount)=>rows[k][m]=!params[k].enabled?0:params[k].method==='manual'?(v.manualCosts[k]?.[m]??p(k)):amount;
+ const set=(k,amount)=>rows[k][m]=!params[k].enabled?0:params[k].method==='manual'?(v.manualCosts[k]?.[m]??p(k)):params[k].method==='driver'?number(d[params[k].rateBasis]?.[m])*p(k):params[k].method==='fixed'?p(k):amount;
  const dp=d.directPeople[m],ip=d.indirectPeople[m],days=new Date(v.year,m+1,0).getDate(),tax=p('payrollTax')/100,itax=p('indirectTax')/100;
  const directCategories=categories('direct',m),indirectCategories=categories('indirect',m);
  const dw=set('payroll',directCategories?categoryPayroll('direct',m):dp*p('payroll')),iw=set('indirectPayroll',indirectCategories?categoryPayroll('indirect',m):ip*p('indirectPayroll'));
