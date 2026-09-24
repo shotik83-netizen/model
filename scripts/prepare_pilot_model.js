@@ -22,7 +22,7 @@ const pilot = {
   sourceIdentities:{
     boq:{contractNumber:'4700134128'},
     primary_documents:{contractor:'Подрядчик-1--2',contractNumber:'НКНХ.10321',project:'ПЭ'},
-    payments:{contractor:'ООО "Подрядчик-1--2"',contractNumber:'120001358474',project:'мПЭ'},
+    payments:{contractor:'ООО "Подрядчик-1--2"',alternateContractors:['Подрядчик-1--2, ООО'],contractNumber:'120001358474',project:'мПЭ'},
     personnel:{contractor:'Подрядчик-1'},equipment:{contractor:'Подрядчик-1'}
   },
   parameters:JSON.parse(JSON.stringify(defaults.parameters)), sources:{}, versions:[]
@@ -32,7 +32,7 @@ const ctx = {DataAdapter:require('../src/data-adapter.js'),CalculationCore:requi
   columnName:n=>{let s='';for(n++;n>0;n=Math.floor((n-1)/26))s=String.fromCharCode(65+(n-1)%26)+s;return s;},
   console,TextDecoder,Date,Array,Number,String,Math};
 vm.createContext(ctx);
-vm.runInContext(extraction+'\nthis.pilotFns={buildKqEstimate,buildKsgItems,buildKsgRevenue,buildPrimaryActuals,countLinkedBankPayments};',ctx);
+vm.runInContext(extraction+'\nthis.pilotFns={buildKqEstimate,buildKsgItems,buildKsgRevenue,buildPrimaryActuals,buildBankActuals,buildFactoringActuals,countLinkedBankPayments};',ctx);
 const boqIdentity = inputs.boq.sheets[0].rows.slice(0,8).flat().some(v => String(v||'').includes('4700134128'));
 if(!boqIdentity)throw Error('BOQ contract 4700134128 is not evidenced');
 const built=ctx.pilotFns.buildKqEstimate(inputs.boq);
@@ -108,29 +108,31 @@ const resourceCacheDifferences=Array.from({length:12},(_,m)=>m+1).filter(month=>
   [['personnel',325,24],['personnel',326,30],['personnel',327,37],['equipment',227,39]]
     .some(([file,row,referenceRow])=>
       Math.abs(inputs.resourceMonths[file][String(row)][month-1].average-refRow(referenceRow)[month-1])>1e-6));
-let paymentCount=0;
-version.drivers.paymentVat=Array(12).fill(0);
-version.drivers.advanceVat=Array(12).fill(0);
-version.paymentActualMonths=Array(12).fill(false);
-for(const row of paymentRows){
- const date=String(row[1]??''),match=/^(\d{4})-(\d{2})-\d{2}$/.exec(date);
- if(!match||+match[1]!==2026)continue;
- const m=+match[2]-1,gross=Number(row[6]),net=Number(row[7]);
- if(!Number.isFinite(gross)||!Number.isFinite(net)||gross<0||net<0||gross<net)
-   throw Error('Payment has missing amount or VAT');
- const isAdvance=String(row[14]??'').toLocaleLowerCase('ru-RU').includes('аванс');
- const key=isAdvance?'advances':'payments',vatKey=isAdvance?'advanceVat':'paymentVat';
- version.drivers[key][m]+=gross;
- version.drivers[vatKey][m]+=gross-net;
- version.paymentActualMonths[m]=true;paymentCount++;
-}
+const bank=ctx.pilotFns.buildBankActuals(inputs.payments,pilot.sourceIdentities.payments,pilot.number,2026,'USD');
+const factoring=ctx.pilotFns.buildFactoringActuals(inputs.factoring,pilot.sourceIdentities.primary_documents,pilot.sourceIdentities.payments.project,2026,'USD');
+version.drivers.primaryExecuted=currentPrimary.actual;
+version.drivers.primaryDeductions=currentPrimary.deductions;
+version.drivers.primaryAdvanceOffset=currentPrimary.advanceOffset;
+version.drivers.primaryGuaranteeHold=currentPrimary.guaranteeHold;
+version.drivers.payments=bank.payments;
+version.drivers.advances=bank.advances;
+version.drivers.paymentVat=bank.paymentVat;
+version.drivers.advanceVat=bank.advanceVat;
+version.drivers.factoring=factoring.amounts;
+version.drivers.advanceOffset=currentPrimary.advanceOffset;
+version.paymentActualMonths=bank.months.map((present,m)=>present||factoring.months[m]);
+version.cashFlowBasis='source_model';
+if(Math.abs(bank.payments[0]-1509602.26)>.01||Math.abs(bank.payments[1]-757302.57)>.01||
+   Math.abs(factoring.amounts[2]-855793.46)>.01||bank.advances.some(x=>x!==0))
+ throw Error('Actual bank / factoring does not match source model 2026');
+const paymentCount=bank.count;
 version.drivers.physicalVolume=Array.from({length:12},(_,m)=>
   items.reduce((s,row)=>s+(Number(row.volumes?.[m])||0),0));
 version.revenueBasis='ksg';version.workItems=items;version.kqEstimate=control.rows;
 version.dataMode='source_partial';version.actualThroughMonth=0;version.primaryIdentityConfirmed=true;
 version.manualCosts={};version.manualPayments={};
 version.workSourceMeta={boqFile:'data/sources/boq.xlsx',ksgFile:'data/sources/ksg.xlsx',
-  paymentFile:'data/sources/payments.xlsx',paymentRows:paymentCount,
+  paymentFile:'data/sources/payments.xlsx',paymentRows:paymentCount,bankRows:bank.count,factoringRows:factoring.count,receiptSource:'Платежи H + Факторинг R, без НДС; зачёты Первичка AD',
   paymentIdentityEvidence:'Контрагент 316668, ERP 120001358474, назначение платежа содержит 4700134128, валюта USD',
   primaryFile:'data/sources/primary_documents.xlsx',primaryRows,
   primarySourceContract:pilot.sourceIdentities.primary_documents.contractNumber,
@@ -148,7 +150,7 @@ version.workSourceMeta={boqFile:'data/sources/boq.xlsx',ksgFile:'data/sources/ks
   warnings:['Договорный номер первички НКНХ.10321 связан с 4700134128 через платёжный ERP 120001358474; отбор факта ограничен этим номером договора',
     `Кэш исходной книги по первичке расходится с документами в месяцах ${primaryCacheDifferences.join(', ')}`,
     `Ресурсные файлы расходятся с прогнозом исходной модели в месяцах ${resourceCacheDifferences.join(', ')}`],
-  blockers:['План поступлений после даты банковского реестра отсутствует',
+  blockers:['План поступлений после даты банковского реестра отсутствует; августовский кэш Excel не совпадает с предоставленным реестром факторинга',
     'Закрытый расход по статьям затрат не подтверждён первичными документами']};
 pilot.versions.push(version);
 contractor.contracts.unshift(pilot);
