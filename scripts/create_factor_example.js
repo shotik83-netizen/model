@@ -1,0 +1,37 @@
+// Generate a reproducible factor-analysis version from copied BOQ/KSG workbooks.
+// Usage: node scripts/create_factor_example.js factor-inputs.json pilot-payload.json output.json
+const fs=require('node:fs');
+const path=require('node:path');
+const vm=require('node:vm');
+const root=path.resolve(__dirname,'..');
+const input=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+const payload=JSON.parse(fs.readFileSync(process.argv[3],'utf8'));
+const c=payload.contractor,pilot=c.contracts.find(d=>d.id==='d_pilot_4700134128'),base=pilot?.versions.find(v=>v.id==='v_pilot_2026');
+if(!base||!input.boq?.sheets?.length||!input.ksg?.sheets?.length)throw Error('Missing real pilot and copied BOQ/KSG sources');
+const source=fs.readFileSync(path.join(root,'src/app.js'),'utf8');
+const extraction=source.slice(source.indexOf('function norm('),source.indexOf('function crc32('));
+const ctx={DataAdapter:require('../src/data-adapter.js'),CalculationCore:require('../src/calculation-core.js'),contractor:()=>c,sum:a=>a.reduce((s,x)=>s+(Number(x)||0),0),columnName:n=>{let s='';for(n++;n>0;n=Math.floor((n-1)/26))s=String.fromCharCode(65+(n-1)%26)+s;return s;},console,TextDecoder,Date,Array,Number,String,Math};
+vm.createContext(ctx);
+vm.runInContext(extraction+'\nthis.exampleFns={buildKqEstimate,buildKsgItems,buildKsgRevenue};',ctx);
+const estimate=ctx.exampleFns.buildKqEstimate(input.boq);
+const allItems=ctx.exampleFns.buildKsgItems(input.ksg,estimate.estimate,2026);
+const items=allItems.filter(x=>x.matchRule==='exact');
+const revenue=ctx.exampleFns.buildKsgRevenue(input.ksg,2026,estimate.estimate,items);
+const next=JSON.parse(JSON.stringify(base));
+next.id='v_factor_example_2026';next.name='Факторный пример 2026 · объём + цена';
+next.exampleDescription='Копия исходных BOQ и КСГ: BOQ!Y64 +5%, КСГ!Y5 +10%; другие исходные документы не изменены.';
+next.exampleEdits={boq:{row:64,column:'Y',factor:1.05},ksg:{row:5,column:'Y',factor:1.1}};delete next.sourceFiles;
+next.kqEstimate=ctx.DataAdapter.workChainControl(estimate.estimate,items).rows;
+next.workItems=items;
+next.drivers.ksgRevenue=revenue.execution;
+next.drivers.ksgMaterialsRevenue=revenue.materialsRevenue;
+next.drivers.ks2Accepted=revenue.ks2;
+next.drivers.physicalVolume=Array.from({length:12},(_,m)=>items.reduce((s,x)=>s+(x.volumes[m]||0),0));
+next.materialForecastByKq=revenue.materialsByKq;
+next.workSourceMeta={...next.workSourceMeta,boqFile:'data/sources/boq.xlsx (сценарий +5% Y64)',ksgFile:'data/sources/ksg.xlsx (сценарий +10% Y5)',loadedAt:new Date().toISOString(),ksgRows:items.length,matchedRows:items.length,unmatchedRows:0,ignoredRows:allItems.length-items.length};
+pilot.versions=pilot.versions.filter(v=>v.id!==next.id);
+pilot.versions.unshift(next);
+fs.writeFileSync(process.argv[4],JSON.stringify(payload));
+const core=require('../src/calculation-core.js'),factor=core.compareWorkItems(base.workItems,next.workItems,{baseFx:80,currentFx:80});
+if(Math.abs(factor.total.control)>1e-5||Math.abs(factor.total.volume)<1||Math.abs(factor.total.price)<1)throw Error('Factor example did not produce balanced volume and price changes');
+console.log(JSON.stringify({rows:items.length,volume:factor.total.volume,price:factor.total.price,control:factor.total.control}));
