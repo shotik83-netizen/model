@@ -12,6 +12,9 @@ assert.deepEqual(DataAdapter.moneyContext({currency:'RUB',fxRate:99}),{currency:
 assert.equal(DataAdapter.stableKey(['KQ-2','Работа','м3']),DataAdapter.stableKey([' KQ-2 ','работа','м3']));
 assert.equal(CalculationCore.toRub(10,91.5),915);
 assert.equal(CalculationCore.fromRub(915,91.5),10);
+assert.equal(CalculationCore.rateInContractCurrency(8000,'RUB','EUR',100),80,'contract rate converts RUB cost to EUR');
+assert.equal(CalculationCore.rateInContractCurrency(80,'CNY','RUB',12),960,'contract rate converts foreign cost to RUB');
+assert.throws(()=>CalculationCore.rateInContractCurrency(80,'USD','EUR',100),/нет курса/,'no unsupported cross currency conversion');
 
 for(const test of cases){
  const result=CalculationCore.factorBridge(test);
@@ -81,6 +84,20 @@ assert.equal(portfolio.totals.cumulative[11],960,'cash accumulation is recompute
 assert.ok(portfolio.control.every(x=>x===0),'monthly portfolio cash reconciles to contract results');
 assert.ok(portfolio.warnings.some(x=>x.includes('Курс')),'missing FX warns without inventing RUB total');
 assert.equal(CalculationCore.aggregateContractor([{...portfolioEntries[1],version:{...portfolioEntries[1].version,currency:'RUB'}} ,portfolioEntries[0]]).status,'blocked','mixed currencies cannot be summed');
+const mixedFx=CalculationCore.aggregateContractor([
+ {...portfolioEntries[0],version:{...portfolioEntries[0].version,fxRate:80}},
+ {...portfolioEntries[1],version:{...portfolioEntries[1].version,currency:'RUB',fxRate:1}}
+]);
+assert.equal(mixedFx.status,'ready','mixed currency contracts convert when contractual FX is supplied');
+assert.equal(mixedFx.currency,'RUB');
+assert.equal(mixedFx.totals.revenue[0],8030,'each contract is converted before summation');
+assert.equal(mixedFx.control[11],0,'converted cumulative cash reconciles');
+const differingContractRates=CalculationCore.aggregateContractor([
+ {...portfolioEntries[0],version:{...portfolioEntries[0].version,fxRate:80}},
+ {...portfolioEntries[1],version:{...portfolioEntries[1].version,fxRate:90}}
+]);
+assert.equal(differingContractRates.totals.revenue[0],130);
+assert.equal(differingContractRates.rubTotals.revenue[0],10700,'RUB equivalent applies each contract rate');
 assert.equal(CalculationCore.aggregateContractor([{...portfolioEntries[1],version:{...portfolioEntries[1].version,year:2027}},portfolioEntries[0]]).status,'blocked','different years cannot be summed');
 assert.equal(CalculationCore.aggregateContractor([{...portfolioEntries[1],version:{...portfolioEntries[1].version,portfolioYearMissing:true}},portfolioEntries[0]]).status,'blocked','inferred default year cannot be silently merged');
 assert.equal(CalculationCore.aggregateContractor([{...portfolioEntries[1],number:'A1'},portfolioEntries[0]]).status,'blocked','duplicate contract numbers cannot be summed');

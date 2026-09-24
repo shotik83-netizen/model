@@ -5,7 +5,7 @@ const core=require(path.resolve(__dirname,'../src/calculation-core.js'));
 assert.equal(core.rateInContractCurrency(5000,'RUB','USD',80),62.5,'convert hourly cost rate to contract currency');
 assert.equal(core.rateInContractCurrency(62.5,'USD','RUB',80),5000,'convert hourly cost rate to RUB');
 assert.throws(()=>core.rateInContractCurrency(5000,'RUB','USD',0),/положительный курс/,'cross-currency rate requires a rate');
-assert.throws(()=>core.rateInContractCurrency(100,'EUR','USD',80),/не задан способ/,'unsupported currency pair is explicit');
+assert.throws(()=>core.rateInContractCurrency(100,'EUR','USD',80),/нет курса/,'unsupported currency pair is explicit');
 assert.deepEqual(core.recognizeKsgSchedule([100,200,0],[20,0,0]),[84,161.6,50.4], 'KSG 70/18/12 schedule uses earlier months');
 const acceptance=core.ksgAcceptanceSchedule([100],[0],[.7,.18,.12],[.1,.2,.3],1);
 assert.deepEqual(acceptance.execution,[70],'execution begins in the work month');
