@@ -33,3 +33,4 @@ jobs:
         run: |
           python3 tests/test_pilot_readiness.py
           python3 tests/test_factor_example.py
+          python3 tests/test_two_contracts.py
