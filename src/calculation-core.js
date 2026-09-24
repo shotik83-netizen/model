@@ -85,7 +85,7 @@ function aggregateContractor(entries=[]){
  if(mismatch>=0)return{status:'blocked',errors:[`Месяц ${mismatch+1}: накопленный поток не совпадает с суммой выбранных договоров.`],year:null,currency:null,totals:null,lines:[]};
  const lines=entries.map(item=>({contractId:item.contractId,number:item.number,versionId:item.version.id,versionName:item.version.name,sourceCurrency:item.version.currency,contractRate:item.version.fxRate,revenue:sum(item.result.revenue.map(x=>convert(x,item))),costs:sum(item.result.costs.map(x=>convert(x,item))),profit:sum(item.result.profit.map(x=>convert(x,item))),ncf:sum(item.result.ncf.map(x=>convert(x,item)))}));
  const warnings=[];
- if(entries.some(item=>item.version.dataMode==='demo'))warnings.push('В свод включена версия с демонстрационными данными.');
+ if(entries.some(item=>item.version.dataMode==='demo'))warnings.push('В свод включена версия с демонстрационными данными.');if(entries.some(item=>item.version.dataMode==='source_partial'))warnings.push('Факт расходов по одному из договоров требует подтверждения первичкой; свод предварительный.');if(entries.some(item=>item.version.scenarioDerived))warnings.push('Один договор является расчётным сценарием из исходных BOQ/КСГ, без документного факта.');
  if(currency!=='RUB'&&entries.some(item=>!(Number(item.version.fxRate)>0)))warnings.push('Курс к RUB не указан: рублёвый эквивалент не рассчитывается.');
  const rubTotals=!mixed&&currency!=='RUB'&&entries.every(item=>number(item.version.fxRate)>0)?Object.fromEntries(keys.map(key=>[key,Array.from({length:12},(_,m)=>sum(entries.map(item=>toRub(item.result[key][m],item.version.fxRate))))])):null;
  return{status:'ready',errors:[],warnings,year,currency,totals,lines,control,rubTotals};
