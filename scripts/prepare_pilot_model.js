@@ -32,7 +32,7 @@ const ctx = {DataAdapter:require('../src/data-adapter.js'),CalculationCore:requi
   columnName:n=>{let s='';for(n++;n>0;n=Math.floor((n-1)/26))s=String.fromCharCode(65+(n-1)%26)+s;return s;},
   console,TextDecoder,Date,Array,Number,String,Math};
 vm.createContext(ctx);
-vm.runInContext(extraction+'\nthis.pilotFns={buildKqEstimate,buildKsgItems,buildKsgRevenue,buildPrimaryActuals};',ctx);
+vm.runInContext(extraction+'\nthis.pilotFns={buildKqEstimate,buildKsgItems,buildKsgRevenue,buildPrimaryActuals,countLinkedBankPayments};',ctx);
 const boqIdentity = inputs.boq.sheets[0].rows.slice(0,8).flat().some(v => String(v||'').includes('4700134128'));
 if(!boqIdentity)throw Error('BOQ contract 4700134128 is not evidenced');
 const built=ctx.pilotFns.buildKqEstimate(inputs.boq);
@@ -88,6 +88,13 @@ const primaryPaymentMatches=inputs.primary_documents.sheets[0].rows.slice(1)
 if(primaryPaymentMatches<3)throw Error('Primary and bank contract aliases are not linked by payment amounts');
 const currentPrimary=ctx.pilotFns.buildPrimaryActuals(inputs.primary_documents,
  pilot.sourceIdentities.primary_documents,2026,'USD');
+const verifiedBankMatches=ctx.pilotFns.countLinkedBankPayments(inputs.payments,
+ pilot.sourceIdentities.payments,pilot.number,'USD',currentPrimary.paidGross);
+if(verifiedBankMatches<3||verifiedBankMatches>primaryPaymentMatches)
+ throw Error('Bank links do not match document amounts and currencies');
+const badCurrency=ctx.pilotFns.countLinkedBankPayments(inputs.payments,
+ pilot.sourceIdentities.payments,pilot.number,'RUB',currentPrimary.paidGross);
+if(badCurrency!==0)throw Error('Bank importer accepted mismatching currency');
 if(currentPrimary.count!==primaryRows||currentPrimary.actual.some((x,m)=>Math.abs(x-version.drivers.primaryExecuted[m])>.01))
  throw Error('Application primary import differs from audited contract filter');
 let wrongContractRejected=false;
@@ -128,7 +135,7 @@ version.workSourceMeta={boqFile:'data/sources/boq.xlsx',ksgFile:'data/sources/ks
   primaryFile:'data/sources/primary_documents.xlsx',primaryRows,
   primarySourceContract:pilot.sourceIdentities.primary_documents.contractNumber,
   bankSourceContract:pilot.sourceIdentities.payments.contractNumber,
-  primaryPaymentMatches,
+  primaryPaymentMatches:verifiedBankMatches,
   primaryIdentityEvidence:`Первичка: НКНХ.10321, Подрядчик-1--2, ПЭ, USD; ${primaryPaymentMatches} документных сумм совпали с платежами ERP 120001358474, назначение которых содержит 4700134128`,
   primaryCacheDifferences,resourceCacheDifferences,resourceSource:reference.source,
   resourceForecastPolicy:'Август–декабрь: прогнозные значения исходной модели, подтверждено пользователем; не считать фактом',
