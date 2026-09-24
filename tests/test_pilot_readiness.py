@@ -19,6 +19,8 @@ assert version['dataMode'] == 'source_partial'
 assert version['currency'] == 'USD'
 assert len(version['workItems']) > 100
 assert sum(version['drivers']['ksgRevenue']) > 0
+if version.get('materialForecastByKq'):
+    assert all(abs(sum(values[m] for values in version['materialForecastByKq'].values()) - version['drivers']['ksgMaterialsRevenue'][m]) < .02 for m in range(12))
 assert version['actualThroughMonth'] == 0 and version['primaryIdentityConfirmed']
 assert len(version['drivers']['ks2Accepted']) == 12
 assert version['workSourceMeta']['unmatchedRows'] == 0
@@ -36,6 +38,8 @@ calculated = subprocess.run(['node', str(root / 'scripts/app_model_snapshot.js')
                             text=True, capture_output=True, check=True)
 result = json.loads(calculated.stdout)
 rows = result['rows']
+if version.get('materialForecastByKq'):
+    assert all(abs(sum(values[m] for values in result['materialCostsByKind'].values()) - rows['projectMaterials'][m]) < .02 for m in range(12))
 assert abs(rows['payroll'][0] - 382981.96414333646) < 0.001
 assert abs(rows['insurance'][0] - 101503.97318406111) < 0.001
 if version.get('cashFlowBasis') == 'source_model':
