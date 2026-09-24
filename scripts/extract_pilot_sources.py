@@ -50,7 +50,7 @@ if __name__ == '__main__':
     root = Path(__file__).resolve().parents[1] / 'data/sources'
     output = Path(sys.argv[1])
     data={key: {'sheets': [rows(root / (key + '.xlsx'))]}
-          for key in ['boq', 'ksg', 'payments', 'primary_documents']}
+          for key in ['boq', 'ksg', 'payments', 'primary_documents', 'factoring']}
     data['resourceMonths']={'personnel':resource_months(root/'personnel.xlsx',[325,326,327]),
                             'equipment':resource_months(root/'equipment.xlsx',[227])}
     output.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')))
