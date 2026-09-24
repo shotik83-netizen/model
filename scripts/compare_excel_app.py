@@ -38,7 +38,7 @@ def readiness(version, contract, source_contract_number=None):
     """Return independent blockers; an unknown identity is not an approved match."""
     issues = []
     if version.get("dataMode") != "imported":
-        issues.append("сохранённая версия не имеет полного подтверждения факта затрат и всех прогнозных входов")
+        issues.append("режим demo: нет подтверждённых исходных данных" if version.get("dataMode") == "demo" else "сохранённая версия не имеет полного подтверждения факта затрат и всех прогнозных входов")
     if version.get("currency") != "USD":
         issues.append("валюта версии не совпадает с указанной валютой эталона USD")
     if version.get("currency") != "RUB" and not (isinstance(version.get("fxRate"), (int, float)) and version["fxRate"] > 0):
