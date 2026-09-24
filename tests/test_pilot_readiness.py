@@ -65,8 +65,13 @@ else:
 assert version['paymentActualMonths'][:6] == [True] * 6
 assert len(version['workSourceMeta']['blockers']) == 2
 assert version['workSourceMeta']['resourceForecastPolicy'].startswith('Август–декабрь')
-for old_id, old_version in [('d1', 'v2'), ('d2', 'v_mucuctuh3k83')]:
-    _, old = load_version(book, old_id, old_version)
-    assert old['dataMode'] == 'unconfigured'
-    assert all(not any(values) for values in old['drivers'].values() if isinstance(values, list))
+scenario, forecast = load_version(book, 'd_scenario_b_4700134128', 'v_scenario_b_2026')
+assert scenario['number'] == '4700134128-B' and scenario['sourceIdentityConfirmed']
+assert forecast['scenarioDerived'] and forecast['expectNoActuals']
+assert forecast['sourceFiles']['boq'] != version['workSourceMeta']['boqFile']
+assert forecast['sourceFiles']['ksg'] != version['workSourceMeta']['ksgFile']
+assert forecast['actualThroughMonth'] == 0
+assert not any(forecast['drivers']['primaryExecuted'])
+assert not any(forecast['drivers']['payments'])
+assert forecast['workSourceMeta']['sourceContractNumber'] == scenario['number']
 print('PILOT READINESS GUARD: OK')
