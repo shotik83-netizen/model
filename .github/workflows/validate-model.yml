@@ -21,6 +21,8 @@ jobs:
         run: node tests/test_economy.js
       - name: Verify bank and primary document links
         run: node tests/test_bank_links.js
+      - name: Verify contract-specific source isolation
+        run: node tests/test_contract_sources.js
       - name: Test source Excel audit without private workbook
         run: python3 tests/test_excel_audit.py
       - name: Guard preliminary Excel/app comparison
