@@ -155,6 +155,8 @@ version.workSourceMeta={boqFile:'data/sources/boq.xlsx',ksgFile:'data/sources/ks
   blockers:['План поступлений после даты банковского реестра отсутствует; августовский кэш Excel не совпадает с предоставленным реестром факторинга',
     'Закрытый расход по статьям затрат не подтверждён первичными документами']};
 pilot.versions.push(version);
+// Rebuilding from an already prepared contractor book must replace the pilot.
+contractor.contracts=contractor.contracts.filter(d=>d.id!==pilot.id&&d.number!==pilot.number);
 contractor.contracts.unshift(pilot);
 contractor.portfolio={...(contractor.portfolio||{}),excluded:['d1','d2']};
 contractor.sourceMapping=contractor.sourceMapping||{sources:{}};

@@ -43,6 +43,42 @@ def workbook_sheet_names(path: Path) -> set[str]:
     return {sheet.attrib.get("name", "") for sheet in root.findall(".//x:sheet", ns)}
 
 
+def validate_contractor_contracts(path: Path) -> None:
+    ns = {"x": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
+          "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships"}
+    try:
+        with zipfile.ZipFile(path) as book:
+            workbook = ET.fromstring(book.read("xl/workbook.xml"))
+            sheet = next(s for s in workbook.findall(".//x:sheet", ns) if s.get("name") == "_DATA")
+            relation = sheet.get("{" + ns["r"] + "}id")
+            rels = ET.fromstring(book.read("xl/_rels/workbook.xml.rels"))
+            target = next(r.get("Target") for r in rels if r.get("Id") == relation)
+            name = target.lstrip("/") if target.startswith("/") else "xl/" + target
+            xml = ET.fromstring(book.read(name))
+            shared = None
+            parts = []
+            for cell in xml.findall(".//x:sheetData/x:row/x:c", ns):
+                if not cell.get("r", "").startswith("A") or cell.get("r") == "A1":
+                    continue
+                if cell.find("x:v", ns) is None and cell.find("x:is", ns) is None:
+                    continue
+                if cell.get("t") == "s":
+                    if shared is None:
+                        shared = ET.fromstring(book.read("xl/sharedStrings.xml")).findall("x:si", ns)
+                    parts.append("".join(shared[int(cell.find("x:v", ns).text)].itertext()))
+                elif cell.get("t") == "inlineStr":
+                    parts.append("".join(cell.find("x:is", ns).itertext()))
+                else:
+                    parts.append(cell.find("x:v", ns).text)
+            contracts = json.loads("".join(parts))["contractor"]["contracts"]
+            for field in ("id", "number"):
+                values = [str(c.get(field, "")).strip() for c in contracts]
+                if not all(values) or len(values) != len(set(values)):
+                    fail(f"{path.relative_to(ROOT)}: повторяющийся или пустой договор ({field})")
+    except (OSError, KeyError, StopIteration, AttributeError, ValueError, zipfile.BadZipFile) as exc:
+        fail(f"{path.relative_to(ROOT)}: ошибка проверки договоров _DATA ({exc})")
+
+
 def validate_config() -> None:
     config = load_json("config/config.json")
     if not isinstance(config, dict):
@@ -76,6 +112,8 @@ def validate_config() -> None:
             continue
         if "_DATA" not in workbook_sheet_names(workbook):
             fail(f"{file_url}: отсутствует обязательный лист _DATA")
+        else:
+            validate_contractor_contracts(workbook)
 
 
 def validate_source_mapping() -> None:
