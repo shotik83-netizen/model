@@ -34,12 +34,22 @@ assert len(version['personnelCategories']['indirect']) == 5
 calculated = subprocess.run(['node', str(root / 'scripts/app_model_snapshot.js')],
                             input=json.dumps(normalized(version, pilot, root)),
                             text=True, capture_output=True, check=True)
-rows = json.loads(calculated.stdout)['rows']
+result = json.loads(calculated.stdout)
+rows = result['rows']
+assert abs(result['inflow'][2] - version['drivers']['factoring'][2]) < 0.01
+assert abs(result['receivable'][2] - (version['drivers']['primaryExecuted'][2] - version['drivers']['primaryGuaranteeHold'][2] - version['drivers']['primaryDeductions'][2] - version['drivers']['factoring'][2] - version['drivers']['advanceOffset'][2])) < 0.01
+assert abs(result['inflow'][0] * version['fxRate'] - 120768180.8) < 0.01
 assert abs(rows['payroll'][0] - 382981.96414333646) < 0.001
 assert abs(rows['insurance'][0] - 101503.97318406111) < 0.001
-assert version['workSourceMeta']['paymentRows'] == 13
-assert round(sum(version['drivers']['payments']), 2) == 2720285.8
-assert sum(version['drivers']['advances']) > 0
+assert version['workSourceMeta']['bankRows'] == 6
+assert version['workSourceMeta']['factoringRows'] == 25
+assert version['cashFlowBasis'] == 'source_model'
+assert version['fxRate'] == 80
+assert round(version['drivers']['payments'][0], 2) == 1509602.26
+assert round(version['drivers']['payments'][1], 2) == 757302.57
+assert round(version['drivers']['factoring'][2], 2) == 855793.46
+assert sum(version['drivers']['advances']) == 0
+assert round(version['drivers']['advanceOffset'][2],2) == 855582.93
 assert version['paymentActualMonths'][:6] == [True] * 6
 assert len(version['workSourceMeta']['blockers']) == 2
 assert version['workSourceMeta']['resourceForecastPolicy'].startswith('Август–декабрь')
