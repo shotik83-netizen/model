@@ -55,8 +55,10 @@ version.drivers.passivePeople=refRow(29);
 version.drivers.equipmentHours=refRow(39).map(x=>x*260);
 version.drivers.nrkVolume=refRow(15);
 version.personnelCategories={direct:reference.direct.map(c=>({sourceRow:c.row,rate:c.rate,currency:'USD',insurance:c.insurance*100,months:refRow(c.row)})),indirect:reference.indirect.map(c=>({sourceRow:c.row,rate:c.rate,currency:'USD',insurance:c.insurance*100,months:refRow(c.row)}))};
-version.costSourceBasis={scaffoldPeople:true,livingPeople:true,projectMaterialsForecast:true,materialMarkupPercent:10};
-version.drivers.ksgRevenue=result.execution;version.drivers.ksgMaterialsRevenue=result.materialsRevenue;
+version.costSourceBasis={scaffoldPeople:true,livingPeople:true,projectMaterialsForecast:true,materialMarkupPercent:10,sourceExcel2026:true};
+version.drivers.sourceDays=refRow(4);version.vacationBasis='source';
+version.parameters.vacation.value=100*31/28/12;version.parameters.indirectVacation.value=100*31/28/12;
+version.drivers.ksgRevenue=result.execution;version.drivers.ksgMaterialsRevenue=result.materialsRevenue;version.materialForecastByKq=result.materialsByKq;
 version.drivers.ks2Accepted=result.ks2;
 // The original model's row 83 filters signed primary documents by contractor
 // and project, not by the ERP contract number (Детальная модель!U83).

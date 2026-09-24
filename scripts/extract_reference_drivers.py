@@ -18,7 +18,7 @@ for c in root.findall('.//m:sheetData/m:row/m:c', ns):
 
 months = [chr(ord('U')+i) if i < 6 else 'A'+chr(ord('A')+i-6) for i in range(12)]
 assert months == ['U','V','W','X','Y','Z','AA','AB','AC','AD','AE','AF']
-rows = [15,23,24,25,26,27,28,29,30,31,32,33,34,35,37,39,83,84]
+rows = [4,15,23,24,25,26,27,28,29,30,31,32,33,34,35,37,39,83,84]
 driver = {'rows': {str(r): [cells.get(f'{col}{r}', 0) for col in months] for r in rows},
           'direct': [{'row': r, 'rate': cells[f'E{r}'], 'insurance': cells[f'F{r}']}
                      for r in range(25,30)],
