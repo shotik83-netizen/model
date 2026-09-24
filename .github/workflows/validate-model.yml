@@ -27,3 +27,7 @@ jobs:
         run: python3 tests/test_excel_compare.py
       - name: Validate data contract, workbooks and factor bridge
         run: python3 scripts/validate_model.py
+      - name: Verify published pilot and factor example
+        run: |
+          python3 tests/test_pilot_readiness.py
+          python3 tests/test_factor_example.py
