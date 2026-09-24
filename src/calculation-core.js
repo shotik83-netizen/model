@@ -115,8 +115,12 @@ function calculateModel(v,costDefs){
  const operatingPayments=aggregate(payments),directPayments=aggregate(payments,'direct'),indirectPayments=aggregate(payments,'indirect');
  const documentedVat=(amount,series,m)=>v.paymentActualMonths?.[m]&&Array.isArray(d[series])&&Number.isFinite(Number(d[series][m]))?Number(d[series][m]):amount/(1+vat)*vat;
  const outputVat=d.payments.map((x,m)=>documentedVat(x,'paymentVat',m)),advanceVat=d.advances.map((x,m)=>documentedVat(x,'advanceVat',m)),offsetVat=d.advanceOffset.map(x=>-x/(1+vat)*vat),vatPay=outputVat.map((x,m)=>Math.max(0,x+advanceVat[m]+offsetVat[m]-inputVat[m]));
- const inflow=d.payments.map((x,m)=>x+d.advances[m]+d.factoring[m]-d.advanceOffset[m]),ncf=inflow.map((x,m)=>x-operatingPayments[m]-vatPay[m]);let acc=0;const cumulative=ncf.map(x=>acc+=x);
- return{rows,revenue,direct,indirect,costs,profit,payments,directPayments,indirectPayments,outputVat,advanceVat,offsetVat,inputVat,vatPay,operatingPayments,inflow,ncf,cumulative,deferred};
+ // The source Excel cash-flow row 140 includes payments, factoring and advances;
+ // signed advance offsets reduce receivables (row 86), not bank receipts.
+ const sourceCash=v.cashFlowBasis==='source_model';
+ const inflow=d.payments.map((x,m)=>x+d.advances[m]+d.factoring[m]-(sourceCash?0:d.advanceOffset[m])),ncf=inflow.map((x,m)=>x-operatingPayments[m]-vatPay[m]);let acc=0;const cumulative=ncf.map(x=>acc+=x);
+ const retention=Array.from({length:12},(_,m)=>number(d.primaryGuaranteeHold?.[m])),receivable=Array.from({length:12},(_,m)=>number(d.primaryExecuted?.[m])-retention[m]-number(d.primaryDeductions?.[m])-number(d.payments[m])-number(d.factoring[m])-number(d.advanceOffset[m]));
+ return{rows,revenue,direct,indirect,costs,profit,payments,directPayments,indirectPayments,outputVat,advanceVat,offsetVat,inputVat,vatPay,operatingPayments,inflow,ncf,cumulative,deferred,retention,receivable};
 }
 return{number,sum,toRub,fromRub,rateInContractCurrency,recognizeKsgSchedule,ksgAcceptanceSchedule,factorBridge,aggregateFactors,topWorkFactors,compareWorkItems,residualFactor,aggregateContractor,calculateModel};
 })();
