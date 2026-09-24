@@ -77,7 +77,7 @@ function aggregateContractor(entries=[]){
  if(errors.length)return{status:'blocked',errors,year:null,currency:null,totals:null,lines:[]};
  const convert=(amount,item)=>mixed&&item.version.currency!=='RUB'?toRub(amount,item.version.fxRate):amount;
  const totals=Object.fromEntries(keys.map(key=>[key,Array.from({length:12},(_,m)=>sum(entries.map(item=>convert(item.result[key][m],item))))]));
- let balance=0;totals.cumulative=totals.ncf.map(value=>balance+=value);
+ let balance=sum(entries.map(item=>convert(item.result.openingCash,item)));totals.cumulative=totals.ncf.map(value=>balance+=value);
  if(Object.values(totals).some(values=>values.some(value=>!Number.isFinite(value))))return{status:'blocked',errors:['Сумма договоров выходит за допустимый числовой диапазон.'],year:null,currency:null,totals:null,lines:[]};
  const control=Array.from({length:12},(_,m)=>totals.cumulative[m]-sum(entries.map(item=>convert(item.result.cumulative[m],item))));
  if(control.some(value=>!Number.isFinite(value)))return{status:'blocked',errors:['Не удалось сверить накопленный поток по договорам.'],year:null,currency:null,totals:null,lines:[]};
@@ -135,9 +135,9 @@ function calculateModel(v,costDefs){
  // The source Excel cash-flow row 140 includes payments, factoring and advances;
  // signed advance offsets reduce receivables (row 86), not bank receipts.
  const sourceCash=v.cashFlowBasis==='source_model';
- const inflow=d.payments.map((x,m)=>x+d.advances[m]+d.factoring[m]-(sourceCash?0:d.advanceOffset[m])),ncf=inflow.map((x,m)=>x-operatingPayments[m]-vatPay[m]);let acc=0;const cumulative=ncf.map(x=>acc+=x);
+ const inflow=d.payments.map((x,m)=>x+d.advances[m]+d.factoring[m]-(sourceCash?0:d.advanceOffset[m])),ncf=inflow.map((x,m)=>x-operatingPayments[m]-vatPay[m]);let acc=number(v.openingCash);const cumulative=ncf.map(x=>acc+=x);
  const retention=Array.from({length:12},(_,m)=>number(d.primaryGuaranteeHold?.[m])),receivable=Array.from({length:12},(_,m)=>number(d.primaryExecuted?.[m])-retention[m]-number(d.primaryDeductions?.[m])-number(d.payments[m])-number(d.factoring[m])-number(d.advanceOffset[m]));
- return{rows,materialCostsByKind,revenue,direct,indirect,costs,profit,payments,directPayments,indirectPayments,outputVat,advanceVat,offsetVat,inputVat,vatPay,operatingPayments,inflow,ncf,cumulative,deferred,retention,receivable};
+ return{rows,materialCostsByKind,revenue,direct,indirect,costs,profit,payments,directPayments,indirectPayments,outputVat,advanceVat,offsetVat,inputVat,vatPay,operatingPayments,inflow,ncf,cumulative,openingCash:number(v.openingCash),deferred,retention,receivable};
 }
 return{number,sum,toRub,fromRub,rateInContractCurrency,recognizeKsgSchedule,ksgAcceptanceSchedule,factorBridge,aggregateFactors,topWorkFactors,compareWorkItems,residualFactor,aggregateContractor,calculateModel};
 })();
