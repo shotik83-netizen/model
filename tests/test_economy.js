@@ -47,6 +47,9 @@ close(result.inflow[0],132,'cash inflow');
 close(result.operatingPayments[0],56.45,'cash expense');
 close(result.ncf[0],57.55,'net cash flow');
 close(result.cumulative[1],result.ncf[0]+result.ncf[1],'cumulative cash flow');
+const followingYear=core.calculateModel({...version,year:2027,openingCash:500},costDefs);
+close(followingYear.cumulative[0],followingYear.ncf[0]+500,'opening cash carries into the next year');
+close(followingYear.openingCash,500,'opening cash is shown separately from annual net cash flow');
 for(let m=0;m<12;m++){
  close(result.costs[m],result.direct[m]+result.indirect[m],`month ${m+1} expense reconciliation`);
  close(result.profit[m],result.revenue[m]-result.costs[m],`month ${m+1} profit reconciliation`);
