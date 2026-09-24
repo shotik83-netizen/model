@@ -68,6 +68,11 @@ close(core.calculateModel(workVersion,costDefs).revenue[0],42,'old saved version
 const convertedCosts={...version,currency:'USD',fxRate:80,parameters:{...parameters,equipment:{...parameters.equipment,value:5000,rateCurrency:'RUB'}}};
 close(core.calculateModel(convertedCosts,costDefs).rows.equipment[0],3*62.5,'equipment rate is converted before multiplying hours');
 close(core.calculateModel(convertedCosts,costDefs).rows.vacation[0],2,'percentage reserve is not converted as a monetary rate');
+const fixedEquipment={...version,parameters:{...parameters,equipment:{...parameters.equipment,method:'fixed',value:12}}};
+close(core.calculateModel(fixedEquipment,costDefs).rows.equipment[0],12,'fixed monthly equipment rate');
+const driverEquipment={...version,parameters:{...parameters,equipment:{...parameters.equipment,method:'driver',rateBasis:'directPeople',value:7}}};
+close(core.calculateModel(driverEquipment,costDefs).rows.equipment[0],2*7,'chosen personnel driver determines equipment rate');
+assert.throws(()=>core.calculateModel({...driverEquipment,parameters:{...parameters,equipment:{...parameters.equipment,method:'driver',rateBasis:'missing',value:7}}},costDefs),/выберите помесячный показатель/,'missing driver blocks cost calculation');
 assert.throws(()=>core.calculateModel({...convertedCosts,fxRate:0},costDefs),/положительный курс/,'expense model does not silently apply foreign rates without exchange rate');
 const sourcePeople={...version,costSourceBasis:{scaffoldPeople:true,livingPeople:true},drivers:{...drivers,laborIntensity:[10,...Array(11).fill(0)],passivePeople:[3,...Array(11).fill(0)],scaffoldPeople:[2,...Array(11).fill(0)]},parameters:{...parameters,scaffoldLabor:{...parameters.scaffoldLabor,value:4},food:{...parameters.food,value:2},housing:{...parameters.housing,value:3}}};
 const sourcePeopleResult=core.calculateModel(sourcePeople,costDefs);
