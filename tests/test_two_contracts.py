@@ -78,6 +78,11 @@ for key in ('revenue', 'costs', 'ncf'):
                for m in range(12)), key
 assert any('расчётным сценарием' in warning for warning in snapshot['warnings'])
 pilot_result, scenario_result = snapshot['individual']
+for individual in snapshot['individual']:
+    bridge = individual['cashBridge']
+    expected = (bridge['revenue'] - bridge['accruedCosts'] + bridge['accrualGap']
+                + bridge['costTiming'] - bridge['taxCash'])
+    assert abs(expected - sum(individual['ncf'])) < 1e-5, 'accrual-to-cash bridge'
 pilot_fact = max(i + 1 for i, x in enumerate(pilot['paymentActualMonths']) if x)
 assert pilot_result['receipts'][:pilot_fact] == pilot['drivers']['payments'][:pilot_fact], 'bank fact preserved'
 assert any(value > 0 for value in pilot_result['receipts'][pilot_fact:]), 'pilot forecast payments'
