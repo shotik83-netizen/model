@@ -321,10 +321,10 @@ function calculateModel(v,costDefs){
   }
   for(let m=0;m<12;m++)if(Math.abs(sum(Object.values(materialCostsByKind).map(x=>x[m]))-rows.projectMaterials[m])>Math.max(.01,Math.abs(rows.projectMaterials[m])*1e-10))throw Error('Материалы KQ-2 не совпадают со статьёй «Проектные материалы» за месяц '+(m+1)+'.');
  }
- const direct=aggregate(rows,'direct'),indirect=aggregate(rows,'indirect'),costs=aggregate(rows),profit=revenue.map((x,m)=>x-costs[m]),payments={},vat=v.vatRate/100,inputVat=Array(12).fill(0);let deferred=0;
- for(const x of costDefs){const k=x[2],param=params[k];payments[k]=Array(12).fill(0);if(v.manualPayments[k]){payments[k]=v.manualPayments[k].slice();}else if(param.enabled&&param.cash){for(let m=0;m<12;m++){const amount=rows[k][m]*(param.vat?1+vat:1),to=m+(param.lag||0);if(to>11){deferred+=amount;continue;}payments[k][to]+=amount;}}if(param.vat)payments[k].forEach((amount,m)=>inputVat[m]+=amount/(1+vat)*vat);}
+ const direct=aggregate(rows,'direct'),indirect=aggregate(rows,'indirect'),costs=aggregate(rows),profit=revenue.map((x,m)=>x-costs[m]),sourceCash=v.cashFlowBasis==='source_model',payments={},vat=v.vatRate/100,inputVat=Array(12).fill(0);let deferred=0;
+ for(const x of costDefs){const k=x[2],param=params[k];payments[k]=Array(12).fill(0);if(v.manualPayments[k]){payments[k]=v.manualPayments[k].slice();}else if(param.enabled&&param.cash){for(let m=0;m<12;m++){const amount=rows[k][m]*(sourceCash?1:param.vat?1+vat:1),to=m+(param.lag||0);if(to>11){deferred+=amount;continue;}payments[k][to]+=amount;}}if(param.vat&&!sourceCash)payments[k].forEach((amount,m)=>inputVat[m]+=amount/(1+vat)*vat);}
  const operatingPayments=aggregate(payments),directPayments=aggregate(payments,'direct'),indirectPayments=aggregate(payments,'indirect');
- const sourceCash=v.cashFlowBasis==='source_model',lastConfirmed=flags=>Array.isArray(flags)?flags.reduce((last,flag,m)=>flag?m+1:last,0):0,forecastFrom=Math.min(12,Math.max(0,Number(v.actualThroughMonth)||0,lastConfirmed(v.primaryMonthsWithDocuments),lastConfirmed(v.paymentActualMonths)));
+ const lastConfirmed=flags=>Array.isArray(flags)?flags.reduce((last,flag,m)=>flag?m+1:last,0):0,forecastFrom=Math.min(12,Math.max(0,Number(v.actualThroughMonth)||0,lastConfirmed(v.primaryMonthsWithDocuments),lastConfirmed(v.paymentActualMonths)));
  const accepted=Array.from({length:12},(_,m)=>number(m<forecastFrom?d.primaryExecuted?.[m]:d.ks2Accepted?.[m]));
  const receipts=d.payments.map(number),advances=d.advances.map(number),factoring=d.factoring.map(number),offsets=d.advanceOffset.map(number),retention=Array.from({length:12},(_,m)=>number(d.primaryGuaranteeHold?.[m]));
  const deductions=Array.from({length:12},(_,m)=>number(d.primaryDeductions?.[m]));
@@ -344,7 +344,7 @@ function calculateModel(v,costDefs){
   }
  }
  const documentedVat=(amount,series,m)=>m<forecastFrom&&v.paymentActualMonths?.[m]&&Array.isArray(d[series])&&Number.isFinite(Number(d[series][m]))?Number(d[series][m]):amount/(1+vat)*vat;
- const outputVat=receipts.map((x,m)=>documentedVat(x,'paymentVat',m)),advanceVat=advances.map((x,m)=>documentedVat(x,'advanceVat',m)),offsetVat=offsets.map(x=>-x/(1+vat)*vat),vatPay=outputVat.map((x,m)=>Math.max(0,x+advanceVat[m]+offsetVat[m]-inputVat[m]));
+ const outputVat=receipts.map((x,m)=>documentedVat(x,'paymentVat',m)),advanceVat=advances.map((x,m)=>documentedVat(x,'advanceVat',m)),offsetVat=offsets.map(x=>-x/(1+vat)*vat),vatPay=outputVat.map((x,m)=>sourceCash?number(v.manualVatPayments?.[m]):Math.max(0,x+advanceVat[m]+offsetVat[m]-inputVat[m]));
  // The source Excel cash-flow row 140 includes payments, factoring and advances;
  // signed advance offsets reduce receivables (row 86), not bank receipts.
  const inflow=receipts.map((x,m)=>x+advances[m]+factoring[m]-(sourceCash?0:offsets[m])),ncf=inflow.map((x,m)=>x-operatingPayments[m]-vatPay[m]);let acc=number(v.openingCash);const cumulative=ncf.map(x=>acc+=x);
