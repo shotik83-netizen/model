@@ -87,3 +87,22 @@ th,th:first-child{background:#eaf0f2;color:#24444d}tr.total td,.model-table .tre
 /* KFO is a collapsible article group and follows the same row treatment as income/cost groups. */
 .model-table tr[data-tree-key="model-top-works"] td,.portfolio-model-table tr[data-tree-key="portfolio-works"] td{background:#fff;color:var(--text);font-weight:650;border-top:0}
 .model-table tr[data-tree-key="model-top-works"] td:first-child,.portfolio-model-table tr[data-tree-key="portfolio-works"] td:first-child{background:#fff;color:var(--text);font-weight:650}
+/* Common hierarchy for all expandable article headings, including КФО. */
+.model-table tr[data-tree-key="model-top-works"] td,.portfolio-model-table tr[data-tree-key="portfolio-works"] td{background:#f3f7f8;color:var(--text);font-weight:650;border-top:1px solid #d0dfe1}
+.model-table tr[data-tree-key="model-top-works"] td:first-child,.portfolio-model-table tr[data-tree-key="portfolio-works"] td:first-child{background:#eaf2f3;color:var(--navy);font-weight:700}
+.period-table tr[data-tree-key="model-top-works"] .metric-col{background:#eaf2f3}
+/* Large work estimates remain legible on laptop and tablet viewports. */
+.kq-card{min-height:0;padding:12px 14px}
+.kq-tablewrap{height:min(76dvh,850px);min-height:520px;max-height:none;overflow:auto}
+.kq-table{min-width:1420px;font-size:13px}.kq-table th,.kq-table td{padding:10px 12px;line-height:1.4}
+.kq-table td:nth-child(2){min-width:370px;max-width:470px}
+@media(max-height:700px){.kq-tablewrap{height:70dvh;min-height:320px}}
+@media(max-width:760px){.kq-tablewrap{height:72dvh;min-height:360px}.kq-table{font-size:12px}.kq-table th,.kq-table td{padding:8px 10px}}
+/* Readable cards and neutral table surfaces; green is reserved for actions and positive values. */
+.grid4 .kpi{padding:8px 12px}.grid4 .kpi strong{font-size:20px;margin:1px 0}.grid4 .kpi small{line-height:1.2}
+.period-table .all-total,.period-table .year-total{background:#edf2f4}.period-table .fact-col{background:#f5f7f8}
+.period-table th.metric-col,.period-table tr.total .metric-col,.period-table tr.tree-total .metric-col{background:#eaf0f2}
+.period-table tr.table-section td,.period-table tr.summary-toggle:hover td{background:#eef3f5;color:#24444d}
+.settings-panel>summary,.settings-sub>summary,.cost-group summary{background:#f3f6f7;color:var(--navy)}
+.factor-drill>summary,.factor-other td{background:#f4f7f8}
+.portfolio .admin-side{background:#f3f5f6}
