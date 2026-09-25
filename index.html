@@ -86,6 +86,9 @@ th,th:first-child{background:#eaf0f2;color:#24444d}tr.total td,.model-table .tre
 .cash-bridge{margin-top:12px;background:#fff;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:7px;padding:10px 12px}.cash-bridge summary{cursor:pointer;font-weight:650}.cash-bridge p{color:var(--muted);font-size:12px}.cash-bridge div{display:flex;justify-content:space-between;gap:12px;padding:3px 0;border-bottom:1px solid #edf0f2;font-size:12px}
 #tableScrollRail{display:none;position:fixed;bottom:0;height:19px;overflow-x:auto;overflow-y:hidden;background:#fff;border:1px solid var(--line);z-index:30;box-shadow:0 -2px 9px #1b343517}#tableScrollRail .scroll-rail-content{height:1px}
 .model-table .table-section td{background:#eaf0f2!important;border-top:1px solid #c5d5d8;color:var(--navy)}
+/* KFO is a collapsible article group and follows the same row treatment as income/cost groups. */
+.model-table tr[data-tree-key="model-top-works"] td,.portfolio-model-table tr[data-tree-key="portfolio-works"] td{background:#fff;color:var(--text);font-weight:650;border-top:0}
+.model-table tr[data-tree-key="model-top-works"] td:first-child,.portfolio-model-table tr[data-tree-key="portfolio-works"] td:first-child{background:#fff;color:var(--text);font-weight:650}
 </style></head><body>
 <header class="top"><div class="topin"><div class="brand"><div class="logo">ФЭ</div><div><div class="eyebrow">Портфель договоров</div><h1>Финансово-экономическая модель</h1></div></div><div class="actions"><label class="edit-toggle"><input id="editMode" type="checkbox"> Редактирование</label><button class="btn" id="importConfigButton">Загрузить общий конфиг</button><button class="btn" id="exportContractorButton">Скачать файл подрядчика</button><button class="btn primary" id="exportConfigButton">Скачать общий config.json</button></div></div></header>
 <div id="notice" role="status" aria-live="polite"></div>
