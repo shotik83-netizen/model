@@ -89,6 +89,25 @@ th,th:first-child{background:#eaf0f2;color:#24444d}tr.total td,.model-table .tre
 /* KFO is a collapsible article group and follows the same row treatment as income/cost groups. */
 .model-table tr[data-tree-key="model-top-works"] td,.portfolio-model-table tr[data-tree-key="portfolio-works"] td{background:#fff;color:var(--text);font-weight:650;border-top:0}
 .model-table tr[data-tree-key="model-top-works"] td:first-child,.portfolio-model-table tr[data-tree-key="portfolio-works"] td:first-child{background:#fff;color:var(--text);font-weight:650}
+/* Common hierarchy for all expandable article headings, including КФО. */
+.model-table tr[data-tree-key="model-top-works"] td,.portfolio-model-table tr[data-tree-key="portfolio-works"] td{background:#f3f7f8;color:var(--text);font-weight:650;border-top:1px solid #d0dfe1}
+.model-table tr[data-tree-key="model-top-works"] td:first-child,.portfolio-model-table tr[data-tree-key="portfolio-works"] td:first-child{background:#eaf2f3;color:var(--navy);font-weight:700}
+.period-table tr[data-tree-key="model-top-works"] .metric-col{background:#eaf2f3}
+/* Large work estimates remain legible on laptop and tablet viewports. */
+.kq-card{min-height:0;padding:12px 14px}
+.kq-tablewrap{height:min(76dvh,850px);min-height:520px;max-height:none;overflow:auto}
+.kq-table{min-width:1420px;font-size:13px}.kq-table th,.kq-table td{padding:10px 12px;line-height:1.4}
+.kq-table td:nth-child(2){min-width:370px;max-width:470px}
+@media(max-height:700px){.kq-tablewrap{height:70dvh;min-height:320px}}
+@media(max-width:760px){.kq-tablewrap{height:72dvh;min-height:360px}.kq-table{font-size:12px}.kq-table th,.kq-table td{padding:8px 10px}}
+/* Readable cards and neutral table surfaces; green is reserved for actions and positive values. */
+.grid4 .kpi{padding:8px 12px}.grid4 .kpi strong{font-size:20px;margin:1px 0}.grid4 .kpi small{line-height:1.2}
+.period-table .all-total,.period-table .year-total{background:#edf2f4}.period-table .fact-col{background:#f5f7f8}
+.period-table th.metric-col,.period-table tr.total .metric-col,.period-table tr.tree-total .metric-col{background:#eaf0f2}
+.period-table tr.table-section td,.period-table tr.summary-toggle:hover td{background:#eef3f5;color:#24444d}
+.settings-panel>summary,.settings-sub>summary,.cost-group summary{background:#f3f6f7;color:var(--navy)}
+.factor-drill>summary,.factor-other td{background:#f4f7f8}
+.portfolio .admin-side{background:#f3f5f6}
 </style></head><body>
 <header class="top"><div class="topin"><div class="brand"><div class="logo">ФЭ</div><div><div class="eyebrow">Портфель договоров</div><h1>Финансово-экономическая модель</h1></div></div><div class="actions"><label class="edit-toggle"><input id="editMode" type="checkbox"> Редактирование</label><button class="btn" id="importConfigButton">Загрузить общий конфиг</button><button class="btn" id="exportContractorButton">Скачать файл подрядчика</button><button class="btn primary" id="exportConfigButton">Скачать общий config.json</button></div></div></header>
 <div id="notice" role="status" aria-live="polite"></div>
@@ -678,6 +697,7 @@ function portfolioDetailedTable(entries,result,futurePeriods=[]){
 function portfolioFactPeriod(entries,year){const months=entries.flatMap(entry=>Array.from({length:12},(_,m)=>entry.version.primaryMonthsWithDocuments?.[m]||entry.version.paymentActualMonths?.[m]?m:-1).filter(m=>m>=0));return months.length?`${MONTHS[Math.min(...months)]} — ${MONTHS[Math.max(...months)]} ${year}`:'нет';}
 function renderPortfolio(){
  const c=contractor(),settings=c.portfolio||{},excluded=new Set(settings.excluded||[]),selected=[],issues=[];
+ for(const picker of document.querySelectorAll('.portfolio-picker>summary'))picker.textContent=`Договоры в своде: ${c.contracts.length-excluded.size} из ${c.contracts.length} · изменить состав и версии`;
  $('portfolioSelection').innerHTML=c.contracts.length?`<div class="portfolio-choices">${c.contracts.map(d=>{const chosen=settings.versionIds?.[d.id]||d.versions.at(-1)?.id||'',v=d.versions.find(x=>x.id===chosen);return `<div class="portfolio-choice"><label><input type="checkbox" data-portfolio-include="${esc(d.id)}" ${excluded.has(d.id)?'':'checked'} > ${esc(d.number)} · ${esc(d.name)}</label><select data-portfolio-version="${esc(d.id)}" aria-label="Версия договора ${esc(d.number)}" >${v?'':'<option value="" selected>Выбранная версия недоступна</option>'}${d.versions.map(x=>`<option value="${esc(x.id)}" ${x.id===chosen?'selected':''}>${esc(x.name)} · ${esc(x.year||'год не указан')} · ${esc(x.currency||'валюта не указана')}</option>`).join('')}</select><span class="sub">${v?esc(v.dataMode==='demo'?'Демонстрационные данные':v.dataMode==='imported'?'BOQ/КСГ подключены; остальные данные проверить':v.dataMode==='source_partial'?'Расчёт предварительный: источники требуют сверки':'Данные не готовы'): 'Версия не найдена'}</span></div>`;}).join('')}</div>`:'<div class="empty">У подрядчика пока нет договоров.</div>';
  $('portfolioDetailSelection').innerHTML=$('portfolioSelection').innerHTML;
  for(const d of c.contracts){if(excluded.has(d.id))continue;const chosen=settings.versionIds?.[d.id]||d.versions.at(-1)?.id,v=d.versions.find(x=>x.id===chosen);if(!v){issues.push(d.number+': выбранная версия не найдена.');continue;}if(!['imported','source_partial'].includes(v.dataMode)||v.workSourceMeta?.error||v.workSourceMeta?.sourceContractNumber!==d.number||!(v.workSourceMeta?.boqRows>0)||!(v.workSourceMeta?.ksgRows>0)||!d.sourceIdentityConfirmed){issues.push(d.number+': проверенные Excel-источники договора не готовы для свода подрядчика.');continue;}try{selected.push({contractId:d.id,number:d.number,version:v,result:calcModel(v,new Set(),d)});}catch(err){issues.push(d.number+': расчёт версии не выполнен: '+err.message);}}
@@ -715,7 +735,7 @@ function renderSummary(){const r=state.results,rev=sum(r.revenue),cost=sum(r.cos
  const currencyOkay=v.currency==='RUB'||fxOf(v)>0;
  $('managerChecks').innerHTML=`<div class="${sourceOkay?'check':'problem'}"><span class="dot">${sourceOkay?'✓':'!'}</span><div><b>Источники работ</b><div class="sub">${esc(sourceMessage)}</div></div></div><div class="${currencyOkay?'check':'problem'}"><span class="dot">${currencyOkay?'✓':'!'}</span><div><b>Валюта</b><div class="sub">${currencyOkay?'Курс для выбранной версии задан.':'Не указан курс к RUB: рублёвый эквивалент недоступен.'}</div></div></div><div class="note space">Сверка расчётов этой версии с исходной Excel-моделью ещё не подтверждена.</div>`;
  const bridge=r.cashBridge;
- $('cashReconciliation').innerHTML=bridge?`<details class="cash-bridge"><summary>Почему финансовый результат отличается от CF?</summary><p>CF включает поступления и выплаты; доходы и расходы учитываются по выполнению и начислению. Оплата КС-2 может прийти позднее.</p><div>Финансовый результат: <b>${fmt(sum(r.profit))}</b></div><div>Поступления минус выручка: <b>${fmt(bridge.accrualGap)}</b></div><div>Начисленные минус оплаченные расходы: <b>${fmt(bridge.costTiming)}</b></div><div>Выплата НДС: <b>${fmt(-bridge.taxCash)}</b></div><div>Остаток на начало: <b>${fmt(bridge.openingCash)}</b></div><div>CF накопительно: <b>${fmt(r.cumulative.at(-1))}</b></div></details>`:'';
+ $('cashReconciliation').innerHTML=bridge?`<details class="cash-bridge"><summary>Сверка финансового результата и CF: ${fmt(sum(r.profit))} → ${fmt(r.cumulative.at(-1))}</summary><p>По текущим входным данным разницу образуют сроки поступлений и выплат, а также НДС. Факт расходов и прогноз платежей требуют сверки с первичкой и исходной моделью.</p><div>Финансовый результат: <b>${fmt(sum(r.profit))}</b></div><div>Поступления: <b>${fmt(bridge.cashReceipts)}</b></div><div>Минус выручка: <b>${fmt(-bridge.revenue)}</b></div><div>Начисленные расходы: <b>${fmt(bridge.accruedCosts)}</b></div><div>Минус выплаты по расходам: <b>${fmt(-bridge.cashCosts)}</b></div><div>Минус выплата НДС: <b>${fmt(-bridge.taxCash)}</b></div><div>Остаток на начало: <b>${fmt(bridge.openingCash)}</b></div><div>CF накопительно: <b>${fmt(r.cumulative.at(-1))}</b></div></details>`:'';
  $('problems').innerHTML=(Math.min(...r.cumulative)<0?`<div class="problem"><b>Потребность в финансировании</b><div class="sub">${fmt(-Math.min(...r.cumulative))}</div></div>`:'')+(r.deferred?`<div class="note space">Выплаты после ${version().year}: ${fmt(r.deferred)}</div>`:'');
 }
 function detail(key,title,rows,open=false,note=''){return `<details class="group-panel" data-group="${key}" ${groupState[key]??open?'open':''}><summary>${title}</summary><div class="group-content">${note?`<p class="sub">${note}</p>`:''}<div class="tablewrap">${makeTable(rows)}</div></div></details>`;}
@@ -744,11 +764,11 @@ function costFactorItems(v,r){
  return items;
 }
 function topWorkRows(v){const rows=rankedWorks(v).slice(0,10);return rows.length?rows:[{label:'Детализация работ не загружена',volumes:Array(12).fill(0),amounts:Array(12).fill(0),value:0,rate:0}];}
-function fitKqPanel(){const card=document.querySelector('.kq-card');if(card)card.style.height='auto';}
+function fitKqPanel(){const card=document.querySelector('.kq-card');if(card)card.style.removeProperty('height');}
 let scrollRailSource=null;
 function setupTableScrollRail(){
- let rail=document.getElementById('tableScrollRail');if(!rail){rail=document.createElement('div');rail.id='tableScrollRail';rail.setAttribute('aria-label','Горизонтальная прокрутка таблицы');rail.innerHTML='<div class="scroll-rail-content"></div>';document.body.appendChild(rail);rail.addEventListener('scroll',()=>{if(scrollRailSource&&Math.abs(scrollRailSource.scrollLeft-rail.scrollLeft)>1)scrollRailSource.scrollLeft=rail.scrollLeft;});window.addEventListener('scroll',()=>requestAnimationFrame(setupTableScrollRail),{passive:true});}
- const wraps=[...document.querySelectorAll('.panel.active .tablewrap')].filter(el=>el.scrollWidth>el.clientWidth+2),candidate=wraps.find(el=>{const rect=el.getBoundingClientRect();return rect.top<window.innerHeight-30&&rect.bottom>window.innerHeight-20;});
+ let rail=document.getElementById('tableScrollRail');if(!rail){rail=document.createElement('div');rail.id='tableScrollRail';rail.setAttribute('aria-label','Горизонтальная прокрутка таблицы');rail.innerHTML='<div class="scroll-rail-content"></div>';document.body.appendChild(rail);rail.addEventListener('scroll',()=>{if(scrollRailSource&&Math.abs(scrollRailSource.scrollLeft-rail.scrollLeft)>1)scrollRailSource.scrollLeft=rail.scrollLeft;});window.addEventListener('scroll',()=>requestAnimationFrame(setupTableScrollRail),{passive:true});window.addEventListener('resize',()=>requestAnimationFrame(setupTableScrollRail),{passive:true});}
+ const wraps=[...document.querySelectorAll('.panel.active .tablewrap')].filter(el=>el.scrollWidth>el.clientWidth+2&&!el.closest('details:not([open])')),candidate=wraps.find(el=>{const rect=el.getBoundingClientRect();return rect.top<window.innerHeight-24&&rect.bottom>window.innerHeight-19;});
  rail.style.display=candidate?'block':'none';if(!candidate){scrollRailSource=null;return;}
  if(scrollRailSource!==candidate){scrollRailSource=candidate;candidate.addEventListener('scroll',()=>{if(scrollRailSource===candidate&&Math.abs(rail.scrollLeft-candidate.scrollLeft)>1)rail.scrollLeft=candidate.scrollLeft;},{passive:true});}
  const rect=candidate.getBoundingClientRect();rail.style.left=Math.max(0,rect.left)+'px';rail.style.width=rect.width+'px';rail.firstElementChild.style.width=candidate.scrollWidth+'px';rail.scrollLeft=candidate.scrollLeft;
