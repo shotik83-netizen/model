@@ -8,10 +8,17 @@ from compare_excel_app import load_version
 
 book = ROOT / 'data/contractors/c1/models/model-2026-09-22.xlsx'
 _, pilot = load_version(book, 'd_pilot_4700134128', 'v_pilot_2026')
-_, factor = load_version(book, 'd_pilot_4700134128', 'v_factor_example_2026')
-_, derived = load_version(book, 'd_scenario_b_4700134128', 'v_scenario_b_2026')
 assert pilot['workSourceMeta']['primaryRows'] > 0
-assert factor['exampleEdits'] and derived['scenarioDerived']
+for contract_id, version_id in (
+    ('d_pilot_4700134128', 'v_factor_example_2026'),
+    ('d_scenario_b_4700134128', 'v_scenario_b_2026'),
+):
+    try:
+        load_version(book, contract_id, version_id)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError(f'Synthetic version was exported: {version_id}')
 app = (ROOT / 'src/app.js').read_text()
 assert '.filter(v=>!v.scenarioDerived&&!v.exampleEdits)' in app
 assert "if(v?.scenarioDerived||v?.exampleEdits)throw Error" in app
