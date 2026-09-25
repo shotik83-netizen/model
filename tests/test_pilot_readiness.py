@@ -44,7 +44,7 @@ assert abs(rows['payroll'][0] - 382981.96414333646) < 0.001
 assert abs(rows['insurance'][0] - 101503.97318406111) < 0.001
 if version.get('cashFlowBasis') == 'source_model':
     assert abs(result['inflow'][2] - version['drivers']['factoring'][2]) < 0.01
-    assert abs(result['receivable'][2] - (version['drivers']['primaryExecuted'][2] - version['drivers']['primaryGuaranteeHold'][2] - version['drivers']['primaryDeductions'][2] - version['drivers']['factoring'][2] - version['drivers']['advanceOffset'][2])) < 0.01
+    assert abs(result['receivable'][2] - result['receivable'][1] - (version['drivers']['primaryExecuted'][2] - version['drivers']['primaryGuaranteeHold'][2] - version['drivers']['primaryDeductions'][2] - version['drivers']['payments'][2] - version['drivers']['factoring'][2] - version['drivers']['advanceOffset'][2])) < 0.01
     assert abs(result['inflow'][0] * version['fxRate'] - 120768180.8) < 0.01
     assert version['workSourceMeta']['bankRows'] == 6
     assert version['workSourceMeta']['factoringRows'] == 25
