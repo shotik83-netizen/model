@@ -1,7 +1,7 @@
 {
   "application": "financial-economic-model",
   "schemaVersion": 4,
-  "revision": "derived-4700134228-source-ready",
+  "revision": "derived-4700134228-model-2026-2027",
   "savedAt": "2026-09-25T11:51:42.611Z",
   "unit": 1000000,
   "contractors": [
@@ -23,7 +23,7 @@
     {
       "id": "c_mugvjjiee42h",
       "name": "Подрядчик 2 · расчётный сценарий",
-      "fileUrl": "data/contractors/derived-4700134228/models/setup-2026-09-25.xlsx"
+      "fileUrl": "data/contractors/derived-4700134228/models/model-2026-2027-2026-09-25.xlsx"
     }
   ],
   "config": {
