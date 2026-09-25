@@ -155,8 +155,11 @@ function calculateModel(v,costDefs){
  // The source Excel cash-flow row 140 includes payments, factoring and advances;
  // signed advance offsets reduce receivables (row 86), not bank receipts.
  const inflow=receipts.map((x,m)=>x+advances[m]+factoring[m]-(sourceCash?0:offsets[m])),ncf=inflow.map((x,m)=>x-operatingPayments[m]-vatPay[m]);let acc=number(v.openingCash);const cumulative=ncf.map(x=>acc+=x);
+ // The bridge makes the difference between accrual and cash explicit. Do not
+ // manufacture a bank receipt merely to make cash flow equal the P&L result.
+ const cashBridge={revenue:sum(revenue),cashReceipts:sum(inflow),accrualGap:sum(inflow)-sum(revenue),accruedCosts:sum(costs),cashCosts:sum(operatingPayments),costTiming:sum(costs)-sum(operatingPayments),taxCash:sum(vatPay),openingCash:number(v.openingCash)};
  let balance=number(v.openingReceivable);const receivable=accepted.map((x,m)=>balance+=x-retention[m]-deductions[m]-offsets[m]-receipts[m]-factoring[m]);
- return{rows,materialCostsByKind,revenue,direct,indirect,costs,profit,payments,directPayments,indirectPayments,outputVat,advanceVat,offsetVat,inputVat,vatPay,operatingPayments,inflow,ncf,cumulative,openingCash:number(v.openingCash),deferred,accepted,receipts,advances,factoring,offsets,retention,deductions,receivable};
+ return{rows,materialCostsByKind,revenue,direct,indirect,costs,profit,payments,directPayments,indirectPayments,outputVat,advanceVat,offsetVat,inputVat,vatPay,operatingPayments,inflow,ncf,cumulative,cashBridge,openingCash:number(v.openingCash),deferred,accepted,receipts,advances,factoring,offsets,retention,deductions,receivable};
 }
 return{number,sum,toRub,fromRub,rateInContractCurrency,recognizeKsgSchedule,ksgAcceptanceSchedule,factorBridge,aggregateFactors,topWorkFactors,compareWorkItems,residualFactor,aggregateContractor,calculateModel};
 })();
