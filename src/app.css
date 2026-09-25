@@ -106,3 +106,5 @@ th,th:first-child{background:#eaf0f2;color:#24444d}tr.total td,.model-table .tre
 .settings-panel>summary,.settings-sub>summary,.cost-group summary{background:#f3f6f7;color:var(--navy)}
 .factor-drill>summary,.factor-other td{background:#f4f7f8}
 .portfolio .admin-side{background:#f3f5f6}
+/* КФО has the same heading row as the other expandable articles. */
+.model-table tr[data-tree-key="model-top-works"] td,.portfolio-model-table tr[data-tree-key="portfolio-works"] td,.model-table tr[data-tree-key="model-top-works"] td:first-child,.portfolio-model-table tr[data-tree-key="portfolio-works"] td:first-child,.period-table tr[data-tree-key="model-top-works"] .metric-col{background:#fff;color:var(--text);font-weight:650;border-top:0}
