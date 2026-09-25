@@ -21,7 +21,7 @@ assert len(version['workItems']) > 100
 assert sum(version['drivers']['ksgRevenue']) > 0
 if version.get('materialForecastByKq'):
     assert all(abs(sum(values[m] for values in version['materialForecastByKq'].values()) - version['drivers']['ksgMaterialsRevenue'][m]) < .02 for m in range(12))
-assert version['actualThroughMonth'] == 0 and version['primaryIdentityConfirmed']
+assert version['actualThroughMonth'] == 8 and version['primaryIdentityConfirmed']
 assert len(version['drivers']['ks2Accepted']) == 12
 assert version['workSourceMeta']['unmatchedRows'] == 0
 assert version['workSourceMeta']['ignoredRows'] == 32
