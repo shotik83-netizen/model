@@ -108,6 +108,8 @@ th,th:first-child{background:#eaf0f2;color:#24444d}tr.total td,.model-table .tre
 .settings-panel>summary,.settings-sub>summary,.cost-group summary{background:#f3f6f7;color:var(--navy)}
 .factor-drill>summary,.factor-other td{background:#f4f7f8}
 .portfolio .admin-side{background:#f3f5f6}
+/* КФО has the same heading row as the other expandable articles. */
+.model-table tr[data-tree-key="model-top-works"] td,.portfolio-model-table tr[data-tree-key="portfolio-works"] td,.model-table tr[data-tree-key="model-top-works"] td:first-child,.portfolio-model-table tr[data-tree-key="portfolio-works"] td:first-child,.period-table tr[data-tree-key="model-top-works"] .metric-col{background:#fff;color:var(--text);font-weight:650;border-top:0}
 </style></head><body>
 <header class="top"><div class="topin"><div class="brand"><div class="logo">ФЭ</div><div><div class="eyebrow">Портфель договоров</div><h1>Финансово-экономическая модель</h1></div></div><div class="actions"><label class="edit-toggle"><input id="editMode" type="checkbox"> Редактирование</label><button class="btn" id="importConfigButton">Загрузить общий конфиг</button><button class="btn" id="exportContractorButton">Скачать файл подрядчика</button><button class="btn primary" id="exportConfigButton">Скачать общий config.json</button></div></div></header>
 <div id="notice" role="status" aria-live="polite"></div>
