@@ -31,8 +31,7 @@ jobs:
         run: python3 scripts/validate_model.py
       - name: Install Excel test reader
         run: python3 -m pip install openpyxl==3.1.5
-      - name: Verify published pilot and factor example
+      - name: Verify published pilot and live-data gate
         run: |
           python3 tests/test_pilot_readiness.py
-          python3 tests/test_factor_example.py
-          python3 tests/test_two_contracts.py
+          python3 tests/test_live_data_gate.py
