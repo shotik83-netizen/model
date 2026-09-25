@@ -131,7 +131,7 @@ function calculateModel(v,costDefs){
  const direct=aggregate(rows,'direct'),indirect=aggregate(rows,'indirect'),costs=aggregate(rows),profit=revenue.map((x,m)=>x-costs[m]),sourceCash=v.cashFlowBasis==='source_model',payments={},vat=v.vatRate/100,inputVat=Array(12).fill(0);let deferred=0;
  for(const x of costDefs){const k=x[2],param=params[k];payments[k]=Array(12).fill(0);if(v.manualPayments[k]){payments[k]=v.manualPayments[k].slice();}else if(param.enabled&&param.cash){for(let m=0;m<12;m++){const amount=rows[k][m]*(sourceCash?1:param.vat?1+vat:1),to=m+(param.lag||0);if(to>11){deferred+=amount;continue;}payments[k][to]+=amount;}}if(param.vat&&!sourceCash)payments[k].forEach((amount,m)=>inputVat[m]+=amount/(1+vat)*vat);}
  const operatingPayments=aggregate(payments),directPayments=aggregate(payments,'direct'),indirectPayments=aggregate(payments,'indirect');
- const lastConfirmed=flags=>Array.isArray(flags)?flags.reduce((last,flag,m)=>flag?m+1:last,0):0,forecastFrom=Math.min(12,Math.max(0,Number(v.actualThroughMonth)||0,lastConfirmed(v.primaryMonthsWithDocuments),lastConfirmed(v.paymentActualMonths)));
+ const lastConfirmed=flags=>Array.isArray(flags)?flags.reduce((last,flag,m)=>flag?m+1:last,0):0,forecastFrom=Math.min(12,Math.max(0,v.closedThroughManual===true?Number(v.actualThroughMonth)||0:Math.max(Number(v.actualThroughMonth)||0,lastConfirmed(v.primaryMonthsWithDocuments),lastConfirmed(v.paymentActualMonths))));
  const accepted=Array.from({length:12},(_,m)=>number(m<forecastFrom?d.primaryExecuted?.[m]:d.ks2Accepted?.[m]));
  const receipts=d.payments.map(number),advances=d.advances.map(number),factoring=d.factoring.map(number),offsets=d.advanceOffset.map(number),retention=Array.from({length:12},(_,m)=>number(d.primaryGuaranteeHold?.[m]));
  const deductions=Array.from({length:12},(_,m)=>number(d.primaryDeductions?.[m]));
@@ -142,6 +142,9 @@ function calculateModel(v,costDefs){
   let debt=number(v.openingReceivable);
   for(let m=0;m<12;m++){
    if(m>=forecastFrom){
+    // A document from an unclosed month is provisional; it must not be added
+    // to that month's newly calculated receipts or to the advance balance.
+    if(v.closedThroughManual===true){factoring[m]=0;advances[m]=0;deductions[m]=0;}
     retention[m]=accepted[m]*rate/100;
     const advanceBalance=Math.max(0,sum(advances.slice(0,m))-sum(offsets.slice(0,m)));
     offsets[m]=contractAccepted>factAccepted&&advanceBalance>0?Math.min(advanceBalance,accepted[m]*advanceBalance/(contractAccepted-sum(accepted.slice(0,m)))):0;
