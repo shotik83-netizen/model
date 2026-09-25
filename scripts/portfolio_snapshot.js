@@ -11,4 +11,4 @@ const aggregate=core.aggregateContractor(entries);
 if(aggregate.status!=='ready')throw Error(aggregate.errors.join('; '));
 process.stdout.write(JSON.stringify({status:aggregate.status,year:aggregate.year,currency:aggregate.currency,
  lines:aggregate.lines,totals:aggregate.totals,control:aggregate.control,warnings:aggregate.warnings,
- individual:entries.map(row=>({number:row.number,revenue:row.result.revenue,costs:row.result.costs,ncf:row.result.ncf}))}));
+ individual:entries.map(row=>({number:row.number,revenue:row.result.revenue,costs:row.result.costs,ncf:row.result.ncf,accepted:row.result.accepted,receipts:row.result.receipts,receivable:row.result.receivable,offsets:row.result.offsets,retention:row.result.retention,factoring:row.result.factoring,deductions:row.result.deductions}))}));
