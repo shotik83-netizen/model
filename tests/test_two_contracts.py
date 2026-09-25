@@ -77,4 +77,10 @@ for key in ('revenue', 'costs', 'ncf'):
     assert all(abs(snapshot['totals'][key][m] - sum(row[key][m] for row in snapshot['individual'])) < 1e-5
                for m in range(12)), key
 assert any('расчётным сценарием' in warning for warning in snapshot['warnings'])
+pilot_result, scenario_result = snapshot['individual']
+pilot_fact = max(i + 1 for i, x in enumerate(pilot['paymentActualMonths']) if x)
+assert pilot_result['receipts'][:pilot_fact] == pilot['drivers']['payments'][:pilot_fact], 'bank fact preserved'
+assert any(value > 0 for value in pilot_result['receipts'][pilot_fact:]), 'pilot forecast payments'
+assert any(value > 0 for value in scenario_result['receipts']), 'scenario cash forecast from KSG/KS-2'
+assert all(abs(x) < 1e-5 for x in scenario_result['receivable'][-3:]), 'forecast closes credit balance'
 print('TWO CONTRACTS: OK; KSG rows', shifted, 'personnel scale', round(ratio, 4))
