@@ -131,14 +131,32 @@ function calculateModel(v,costDefs){
  const direct=aggregate(rows,'direct'),indirect=aggregate(rows,'indirect'),costs=aggregate(rows),profit=revenue.map((x,m)=>x-costs[m]),payments={},vat=v.vatRate/100,inputVat=Array(12).fill(0);let deferred=0;
  for(const x of costDefs){const k=x[2],param=params[k];payments[k]=Array(12).fill(0);if(v.manualPayments[k]){payments[k]=v.manualPayments[k].slice();}else if(param.enabled&&param.cash){for(let m=0;m<12;m++){const amount=rows[k][m]*(param.vat?1+vat:1),to=m+(param.lag||0);if(to>11){deferred+=amount;continue;}payments[k][to]+=amount;}}if(param.vat)payments[k].forEach((amount,m)=>inputVat[m]+=amount/(1+vat)*vat);}
  const operatingPayments=aggregate(payments),directPayments=aggregate(payments,'direct'),indirectPayments=aggregate(payments,'indirect');
- const documentedVat=(amount,series,m)=>v.paymentActualMonths?.[m]&&Array.isArray(d[series])&&Number.isFinite(Number(d[series][m]))?Number(d[series][m]):amount/(1+vat)*vat;
- const outputVat=d.payments.map((x,m)=>documentedVat(x,'paymentVat',m)),advanceVat=d.advances.map((x,m)=>documentedVat(x,'advanceVat',m)),offsetVat=d.advanceOffset.map(x=>-x/(1+vat)*vat),vatPay=outputVat.map((x,m)=>Math.max(0,x+advanceVat[m]+offsetVat[m]-inputVat[m]));
+ const sourceCash=v.cashFlowBasis==='source_model',lastConfirmed=flags=>Array.isArray(flags)?flags.reduce((last,flag,m)=>flag?m+1:last,0):0,forecastFrom=Math.min(12,Math.max(0,Number(v.actualThroughMonth)||0,lastConfirmed(v.primaryMonthsWithDocuments),lastConfirmed(v.paymentActualMonths)));
+ const accepted=Array.from({length:12},(_,m)=>number(m<forecastFrom?d.primaryExecuted?.[m]:d.ks2Accepted?.[m]));
+ const receipts=d.payments.map(number),advances=d.advances.map(number),factoring=d.factoring.map(number),offsets=d.advanceOffset.map(number),retention=Array.from({length:12},(_,m)=>number(d.primaryGuaranteeHold?.[m]));
+ const deductions=Array.from({length:12},(_,m)=>number(d.primaryDeductions?.[m]));
+ if(sourceCash&&v.revenueBasis==='ksg'&&Array.isArray(d.ks2Accepted)){
+  const rate=v.forecastGuaranteeRatePercent==null?5:number(v.forecastGuaranteeRatePercent);
+  if(rate<0||rate>100)throw Error('Удержание ГУ в прогнозе должно быть от 0 до 100%.');
+  const contractAccepted=sum(accepted),factAccepted=sum(accepted.slice(0,forecastFrom));
+  let debt=number(v.openingReceivable);
+  for(let m=0;m<12;m++){
+   if(m>=forecastFrom){
+    retention[m]=accepted[m]*rate/100;
+    const advanceBalance=Math.max(0,sum(advances.slice(0,m))-sum(offsets.slice(0,m)));
+    offsets[m]=contractAccepted>factAccepted&&advanceBalance>0?Math.min(advanceBalance,accepted[m]*advanceBalance/(contractAccepted-sum(accepted.slice(0,m)))):0;
+    receipts[m]=Math.max(0,debt+accepted[m]-retention[m]-deductions[m]-offsets[m]-factoring[m]);
+   }
+   debt+=accepted[m]-retention[m]-deductions[m]-offsets[m]-receipts[m]-factoring[m];
+  }
+ }
+ const documentedVat=(amount,series,m)=>m<forecastFrom&&v.paymentActualMonths?.[m]&&Array.isArray(d[series])&&Number.isFinite(Number(d[series][m]))?Number(d[series][m]):amount/(1+vat)*vat;
+ const outputVat=receipts.map((x,m)=>documentedVat(x,'paymentVat',m)),advanceVat=advances.map((x,m)=>documentedVat(x,'advanceVat',m)),offsetVat=offsets.map(x=>-x/(1+vat)*vat),vatPay=outputVat.map((x,m)=>Math.max(0,x+advanceVat[m]+offsetVat[m]-inputVat[m]));
  // The source Excel cash-flow row 140 includes payments, factoring and advances;
  // signed advance offsets reduce receivables (row 86), not bank receipts.
- const sourceCash=v.cashFlowBasis==='source_model';
- const inflow=d.payments.map((x,m)=>x+d.advances[m]+d.factoring[m]-(sourceCash?0:d.advanceOffset[m])),ncf=inflow.map((x,m)=>x-operatingPayments[m]-vatPay[m]);let acc=number(v.openingCash);const cumulative=ncf.map(x=>acc+=x);
- const retention=Array.from({length:12},(_,m)=>number(d.primaryGuaranteeHold?.[m])),receivable=Array.from({length:12},(_,m)=>number(d.primaryExecuted?.[m])-retention[m]-number(d.primaryDeductions?.[m])-number(d.payments[m])-number(d.factoring[m])-number(d.advanceOffset[m]));
- return{rows,materialCostsByKind,revenue,direct,indirect,costs,profit,payments,directPayments,indirectPayments,outputVat,advanceVat,offsetVat,inputVat,vatPay,operatingPayments,inflow,ncf,cumulative,openingCash:number(v.openingCash),deferred,retention,receivable};
+ const inflow=receipts.map((x,m)=>x+advances[m]+factoring[m]-(sourceCash?0:offsets[m])),ncf=inflow.map((x,m)=>x-operatingPayments[m]-vatPay[m]);let acc=number(v.openingCash);const cumulative=ncf.map(x=>acc+=x);
+ let balance=number(v.openingReceivable);const receivable=accepted.map((x,m)=>balance+=x-retention[m]-deductions[m]-offsets[m]-receipts[m]-factoring[m]);
+ return{rows,materialCostsByKind,revenue,direct,indirect,costs,profit,payments,directPayments,indirectPayments,outputVat,advanceVat,offsetVat,inputVat,vatPay,operatingPayments,inflow,ncf,cumulative,openingCash:number(v.openingCash),deferred,accepted,receipts,advances,factoring,offsets,retention,deductions,receivable};
 }
 return{number,sum,toRub,fromRub,rateInContractCurrency,recognizeKsgSchedule,ksgAcceptanceSchedule,factorBridge,aggregateFactors,topWorkFactors,compareWorkItems,residualFactor,aggregateContractor,calculateModel};
 })();
