@@ -47,7 +47,7 @@ body{min-width:360px}button:focus-visible,input:focus-visible,select:focus-visib
 @media(max-width:620px){.settings-panel .source-grid{grid-template-columns:1fr}.settings-nav{overflow:auto;flex-wrap:nowrap}.year-card{min-width:210px}}
 .settings-sub{border:1px solid var(--line);border-radius:6px;padding:0 8px 7px;margin-top:4px;min-width:0}.settings-sub>summary{cursor:pointer;padding:7px 2px;font-weight:650;color:var(--navy);font-size:12px}.settings-sub[open]>summary{border-bottom:1px solid var(--line)}.settings-sub>.sub{margin:6px 0}.settings-sub .formgrid{margin:6px 0}
 /* Свод договора: общий итог, закрытый факт, месяцы нескольких лет и годовые итоги. */
-.period-table{width:max-content;min-width:0;border-collapse:separate;border-spacing:0}
+.period-table{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0}
 .period-table th,.period-table td{white-space:nowrap;padding:7px 6px 7px 7px;font-variant-numeric:tabular-nums}
 .period-table .metric-col{position:sticky;left:0;z-index:4;min-width:225px;max-width:280px;background:#fff;white-space:normal;text-align:left}
 .period-table th.metric-col{background:#e5f0e9;z-index:6}
