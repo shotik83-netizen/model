@@ -50,9 +50,10 @@ close(sourceCashResult.payments.equipment[1],15,'source model equipment payment 
 close(sourceCashResult.vatPay[0],0,'source workbook has no VAT cash payment without an explicit input');
 const sourceWithDocumentedTax=core.calculateModel({...version,cashFlowBasis:'source_model',manualVatPayments:[7,...Array(11).fill(0)]},costDefs);
 close(sourceWithDocumentedTax.vatPay[0],7,'documented VAT cash payment takes precedence');
-const provisionalDrivers={...drivers,ks2Accepted:[...Array(7).fill(0),100,...Array(4).fill(0)],primaryExecuted:[...Array(7).fill(0),20,...Array(4).fill(0)],primaryGuaranteeHold:series(),primaryDeductions:series(),payments:series(),advances:series(),advanceOffset:series(),factoring:[...Array(7).fill(0),15,...Array(4).fill(0)]};
+const provisionalDrivers={...drivers,ksgRevenue:[...Array(7).fill(0),70,...Array(4).fill(0)],ks2Accepted:[...Array(7).fill(0),100,...Array(4).fill(0)],primaryExecuted:[...Array(7).fill(0),20,...Array(4).fill(0)],primaryGuaranteeHold:series(),primaryDeductions:series(),payments:series(),advances:series(),advanceOffset:series(),factoring:[...Array(7).fill(0),15,...Array(4).fill(0)]};
 const cutoffVersion={...version,drivers:provisionalDrivers,revenueBasis:'ksg',cashFlowBasis:'source_model',actualThroughMonth:7,closedThroughManual:true,paymentActualMonths:[...Array(8).fill(true),...Array(4).fill(false)]};
 const cutoffResult=core.calculateModel(cutoffVersion,costDefs);
+close(cutoffResult.revenue[7],70,'work income follows staged KSG execution independently of KS-2');
 close(cutoffResult.accepted[7],100,'provisional month uses forecast KS-2 after manual cutoff');
 close(cutoffResult.factoring[7],0,'provisional factoring is not counted as closed cash');
 close(cutoffResult.receipts[7],95,'forecast receipts use KS-2 less retention');
@@ -64,6 +65,7 @@ close(settled.inflow[7]+settled.inflow[11]+30,110,'project receipts include earl
 close(settled.advanceBalance[11],0,'advance is cleared after offset');
 close(settled.guaranteeBalance[11],0,'guarantee is cleared after final payment');
 const automaticResult=core.calculateModel({...cutoffVersion,closedThroughManual:false},costDefs);
+close(automaticResult.revenue[7],70,'documentary cutoff does not alter executed work income');
 close(automaticResult.accepted[7],20,'automatic mode uses the documented month');
 close(automaticResult.factoring[7],15,'automatic mode includes documented factoring');
 close(result.inflow[0],144,'cash inflow without double offset');

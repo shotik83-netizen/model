@@ -43,8 +43,8 @@ if version.get('materialForecastByKq'):
 assert abs(rows['payroll'][0] - 382981.96414333646) < 0.001
 assert abs(rows['insurance'][0] - 101503.97318406111) < 0.001
 if version.get('cashFlowBasis') == 'source_model':
-    assert all(abs(income - accepted - other) < .01 for income, accepted, other in zip(
-        result['revenue'], result['accepted'], version['drivers']['otherRevenue']))
+    assert all(abs(income - execution - other) < .01 for income, execution, other in zip(
+        result['revenue'], version['drivers']['ksgRevenue'], version['drivers']['otherRevenue']))
     assert all(abs(planned - source) < .01 for planned, source in zip(
         result['scheduledRevenue'], version['drivers']['ksgRevenue']))
     assert abs(result['inflow'][2] - version['drivers']['factoring'][2]) < 0.01
@@ -78,7 +78,8 @@ if len(sys.argv) == 1:
                                 text=True, capture_output=True, check=True)
     r = json.loads(calculated.stdout)
     total = lambda key: sum(r[key])
-    assert abs(total('revenue') - total('accepted')) < .01
+    assert abs(total('revenue') - total('scheduledRevenue')) < .01
+    assert total('revenue') > total('accepted')
     assert abs(total('accepted') - 41996101.17) < .02
     assert abs(total('scheduledRevenue') - 54667540.9975396) < .02
     assert abs(total('inflow') - 36065997.63544542) < .02
