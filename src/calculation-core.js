@@ -70,6 +70,13 @@ function compareWorkItems(baseItems=[],currentItems=[],{baseFx=1,currentFx=1}={}
  return{rows,total:aggregateFactors(rows)};
 }
 function residualFactor({base=0,current=0,explained=0}={}){return number(current)-number(base)-number(explained);}
+function effectiveCostBridge({baseCost=0,currentCost=0,baseQuantity=0,currentQuantity=0}={}){
+ const q0=number(baseQuantity),q1=number(currentQuantity),c0=number(baseCost),c1=number(currentCost);
+ const rate0=q0>0?c0/q0:null,rate1=q1>0?c1/q1:null;
+ if(rate0===null||rate1===null)return{rate0,rate1,volume:0,price:0,remainder:c1-c0};
+ const factor=factorBridge({q0,p0:rate0,q1,p1:rate1});
+ return{rate0,rate1,volume:factor.volume,price:factor.price,remainder:c1-c0-factor.volume-factor.price};
+}
 function aggregateContractor(entries=[]){
  const keys=['revenue','direct','indirect','costs','profit','inflow','operatingPayments','vatPay','ncf','cumulative'];
  const errors=[],seenIds=new Set(),seenNumbers=new Set();
@@ -193,6 +200,6 @@ function calculateModel(v,costDefs){
  let balance=number(v.openingReceivable);const receivable=accepted.map((x,m)=>balance+=x-retention[m]-deductions[m]-offsets[m]-receipts[m]-factoring[m]);
  return{rows,materialCostsByKind,revenue,scheduledRevenue:calculatedRevenue,direct,indirect,costs,profit,payments,directPayments,indirectPayments,outputVat,advanceVat,offsetVat,inputVat,vatPay,operatingPayments,inflow,ncf,cumulative,cashBridge,openingCash:number(v.openingCash),openingAdvance,openingGuarantee,deferred,accepted,receipts,advances,advanceBalance,factoring,offsets,retention,guaranteeRelease,guaranteeBalance,deductions,receivable};
 }
-return{number,sum,toRub,fromRub,rateInContractCurrency,recognizeKsgSchedule,ksgAcceptanceSchedule,checkResourceCoverage,factorBridge,aggregateFactors,topWorkFactors,compareWorkItems,residualFactor,aggregateContractor,calculateModel};
+return{number,sum,toRub,fromRub,rateInContractCurrency,recognizeKsgSchedule,ksgAcceptanceSchedule,checkResourceCoverage,factorBridge,aggregateFactors,topWorkFactors,compareWorkItems,residualFactor,effectiveCostBridge,aggregateContractor,calculateModel};
 })();
 if(typeof module!=='undefined'&&module.exports)module.exports=CalculationCore;

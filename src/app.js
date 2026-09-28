@@ -598,31 +598,57 @@ function renderCostFactorAnalysis(other,current,a,b,canRub,factorCurrency){
 function renderComparison(){
  const current=version(),select=$('compareVersion'),previous=select.value;
  $('factorCurrentVersion').textContent=`${current.name} · ${current.year}`;
- const candidates=contract().versions.filter(x=>x.id!==current.id&&x.year===current.year);
- select.innerHTML='<option value="">Выберите базовую версию</option>'+candidates.map(x=>`<option value="${esc(x.id)}">${esc(x.name)} · ${x.year}</option>`).join('');
+ const candidates=contract().versions.filter(x=>x.id!==current.id);
+ select.innerHTML='<option value="">Выберите модель</option>'+candidates.map(x=>`<option value="${esc(x.id)}">${esc(x.name)} · ${x.year}</option>`).join('');
  if(candidates.some(x=>x.id===previous))select.value=previous;
  else if(candidates.some(x=>x.id===current.factorBaseVersionId))select.value=current.factorBaseVersionId;
  else select.value='';
  const other=contract().versions.find(x=>x.id===select.value);
- if(!other){$('factorTable').innerHTML='<p class="note">'+(candidates.length?'Выберите базовую версию этого договора и года. Для собственного сценария создайте альтернативу, измените в ней данные и сравните с исходной версией.':'Для анализа создайте альтернативную версию текущего года в режиме редактирования. Затем измените её исходные данные и выберите базовую версию выше.')+'</p>';return;}
- const a=calcModel(other),b=state.results;
- const metrics=[['Доходы',sum(a.revenue),sum(b.revenue)],['Расходы',sum(a.costs),sum(b.costs)],['Результат',sum(a.profit),sum(b.profit)],['Поток на конец',a.cumulative.at(-1),b.cumulative.at(-1)]];
- const sameCurrency=other.currency===current.currency,canRub=fxOf(other)>0&&fxOf(current)>0;
- const factorCurrency=canRub?'RUB':sameCurrency?current.currency:null;
- const convert=(n,v)=>canRub?rub(n,v):n;
- const analysis=factorCurrency?CalculationCore.compareWorkItems(other.workItems,current.workItems,{baseFx:canRub?fxOf(other):1,currentFx:canRub?fxOf(current):1}):{rows:[],total:{base:0,current:0,volume:0,price:0,variance:0,control:0}};
- const ranked=CalculationCore.topWorkFactors(analysis.rows,10);
- const statusLabel={matched:'Сопоставлена',new:'Новая',removed:'Исключена',unmatched:'Нет данных'};
- const detail=x=>`<details class="factor-row-details"><summary>${esc(x.label)}</summary><div>База: ${fmtQuantity(x.q0)} ${esc(x.unit||'')}, ставка ${x.rawP0==null?'—':fmtRaw(x.p0)}; текущая: ${fmtQuantity(x.q1)} ${esc(x.unit||'')}, ставка ${x.rawP1==null?'—':fmtRaw(x.p1)}. ${statusLabel[x.status]||esc(x.status)}</div></details>`;
- const factorNumber=n=>Math.abs(Number(n)||0)<1e-9?'—':new Intl.NumberFormat('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2}).format((Number(n)||0)/state.unit);
- const row=x=>`<tr><td>${esc(x.code||'—')}</td><td>${detail(x)}</td><td>${factorNumber(x.base)}</td><td>${factorNumber(x.volume)}</td><td>${factorNumber(x.price)}</td><td>${factorNumber(x.current)}</td><td>${factorNumber(x.control)}</td></tr>`;
- const otherRow=ranked.other?`<tr class="factor-other"><td>—</td><td>${esc(ranked.other.label)}</td><td>${factorNumber(ranked.other.base)}</td><td>${factorNumber(ranked.other.volume)}</td><td>${factorNumber(ranked.other.price)}</td><td>${factorNumber(ranked.other.current)}</td><td>${factorNumber(ranked.other.control)}</td></tr>`:'';
- const summary=`<div class="factor-kpis">${metrics.map(([label,left,right])=>{const l=convert(left,other),r=convert(right,current),delta=r-l;return`<div class="factor-kpi"><small>${label}</small><strong class="${label==='Расходы'&&delta>0||label!=='Расходы'&&delta<0?'negative':''}">${fmtRaw(delta)}</strong><span>${fmtRaw(l)} → ${fmtRaw(r)} ${esc(unitName(factorCurrency||current.currency))}</span></div>`;}).join('')}</div>`;
- const bridge=ranked.visible.length?`<div class="tablewrap"><table class="factor-table factor-simple"><thead><tr><th>KQ-2</th><th>Работа</th><th>Базовый период</th><th>Объём</th><th>Ставка</th><th>Текущая</th><th>Контроль</th></tr></thead><tbody>${ranked.visible.map(row).join('')}${otherRow}<tr class="total"><td></td><td>Все работы</td><td>${factorNumber(analysis.total.base)}</td><td>${factorNumber(analysis.total.volume)}</td><td>${factorNumber(analysis.total.price)}</td><td>${factorNumber(analysis.total.current)}</td><td>${factorNumber(analysis.total.control)}</td></tr></tbody></table></div>`:'<p class="sub">Нет сопоставленных работ двух версий.</p>';
- const incomeDelta=convert(metrics[0][2],current)-convert(metrics[0][1],other),costDelta=convert(metrics[1][2],current)-convert(metrics[1][1],other),primaryImpact=Math.abs(incomeDelta)>=Math.abs(costDelta)?'доходы':'расходы';
- const incomeRemainder=CalculationCore.residualFactor({base:0,current:incomeDelta,explained:analysis.total.volume+analysis.total.price});
- const incomeBridge=`<div class="factor-income-bridge"><p>Изменение дохода: объём работ ${factorNumber(analysis.total.volume)} + ставка ${factorNumber(analysis.total.price)} + прочие факторы ${factorNumber(incomeRemainder)} = ${factorNumber(incomeDelta)} ${esc(unitName(factorCurrency||current.currency))}.</p><p class="sub">Прочие факторы — остаток между изменением всего дохода и оценкой работ по BOQ; в него могут входить календарь признания, материалы и прочие доходы. Это не отдельная оценка каждого из этих факторов.</p></div>`;
- $('factorTable').innerHTML=`<p class="factor-lead">Основное изменение: ${primaryImpact}. База «${esc(other.name)}» → альтернатива «${esc(current.name)}»; ${current.year} год, суммы в ${esc(unitName(factorCurrency||current.currency))}.</p>${summary}<div class="factor-sections"><details class="factor-drill"><summary><b>Доходы и работы</b><strong class="${incomeDelta<0?'negative':''}">${fmtRaw(incomeDelta)}</strong><small>Объём ${factorNumber(analysis.total.volume)}, ставка ${factorNumber(analysis.total.price)}, прочие факторы ${factorNumber(incomeRemainder)}</small></summary>${incomeBridge}${bridge}</details><details class="factor-drill"><summary><b>Расходы</b><strong class="${costDelta>0?'negative':''}">${fmtRaw(costDelta)}</strong><small>Прямые и косвенные показаны раздельно</small></summary>${renderCostFactorAnalysis(other,current,a,b,canRub,factorCurrency)}</details><details class="factor-method"><summary>Как рассчитаны факторы</summary><p>Изменение работы = изменение объёма при базовой ставке + изменение ставки при текущем объёме. Прочие факторы дохода вычислены как разница между изменением всего дохода и суммой факторов работ. Факторы расходов показывают рассчитанные базы и ставки; оставшаяся сумма отнесена к прочим начислениям соответствующей группы. Для разных валют использован договорный курс каждой версии.</p></details></div>`;
+ if(!other){$('factorTable').innerHTML='<p class="note">'+(candidates.length?'Выберите модель для сравнения выше.':'Для сравнения создайте ещё одну версию договора, измените её исходные данные и вернитесь сюда.')+'</p>';return;}
+ const a=calcModel(other),b=state.results,sameCurrency=other.currency===current.currency,canRub=fxOf(other)>0&&fxOf(current)>0;
+ if(!sameCurrency&&!canRub){$('factorTable').innerHTML='<p class="note warning">Для сравнения разных валют укажите положительный договорный курс обеих версий.</p>';return;}
+ const currency=canRub?'RUB':current.currency,convert=(n,v)=>canRub?rub(n,v):n;
+ const number=(n,raw=false)=>{if(Math.abs(n)<1e-9)return '—';return new Intl.NumberFormat('ru-RU',{minimumFractionDigits:raw?0:1,maximumFractionDigits:raw?1:1}).format(raw?n:n/state.unit);};
+ const money=(n,v)=>convert(n,v),amount=(r,k,v)=>money(sum(r[k]),v),expense=(r,k,v)=>money(sum(r.rows[k]),v);
+ const cell=(n,raw=false)=>`<td class="${n<0?'negative':''}">${number(n,raw)}</td>`;
+ const line=(label,left,right,{level=0,kind='',raw=false,unit=''}={})=>`<tr class="factor-${kind||'line'} level-${level}"><td>${esc(label)}${unit?` <small>${esc(unit)}</small>`:''}</td>${cell(right,raw)}${cell(left,raw)}${cell(right-left,raw)}</tr>`;
+ const reason=(label,value)=>`<tr class="factor-reason"><td>↳ ${esc(label)}</td><td>—</td><td>—</td>${cell(value)}</tr>`;
+ const section=label=>`<tr class="factor-section"><td colspan="4">${esc(label)}</td></tr>`;
+ const analysis=CalculationCore.compareWorkItems(other.workItems||[],current.workItems||[],{baseFx:canRub?fxOf(other):1,currentFx:canRub?fxOf(current):1});
+ const ranked=CalculationCore.topWorkFactors(analysis.rows,10),workRows=ranked.visible;
+ const hours=(v,key)=>sum(v.drivers[key]||[])*260;
+ const costBridge=(key,quantity)=>CalculationCore.effectiveCostBridge({baseCost:expense(a,key,other),currentCost:expense(b,key,current),baseQuantity:quantity(other),currentQuantity:quantity(current)});
+ const keyCost=(key,label,quantity,unit)=>{const left=expense(a,key,other),right=expense(b,key,current),f=costBridge(key,quantity);return line(label,left,right,{level:2})+reason('Объём · '+unit,f.volume)+reason('Средняя ставка за '+unit,f.price)+(Math.abs(f.remainder)>.01?reason('Прочие изменения / нет подтверждённой базы',f.remainder):'');};
+ let rows=section('Технико-экономические показатели');
+ rows+=`<tr class="factor-subhead"><td colspan="4">Ключевые физические объёмы · топ-10 по стоимости работ</td></tr>`;
+ for(const x of workRows)rows+=line(x.label,x.q0,x.q1,{level:1,raw:true,unit:x.unit});
+ if(ranked.other)rows+=`<tr class="factor-note"><td colspan="4">Остальные ${ranked.hiddenCount} работ учтены в денежном мосте доходов; физические объёмы разных единиц не складываются.</td></tr>`;
+ rows+=line('Прямой труд, расчётные чел.-ч',hours(other,'directPeople'),hours(current,'directPeople'),{raw:true});
+ rows+=line('Средняя ставка прямого ФОТ, '+currency+'/чел.-ч',hours(other,'directPeople')?expense(a,'payroll',other)/hours(other,'directPeople'):0,hours(current,'directPeople')?expense(b,'payroll',current)/hours(current,'directPeople'):0,{raw:true});
+ rows+=line('Косвенный труд, расчётные чел.-ч',hours(other,'indirectPeople'),hours(current,'indirectPeople'),{raw:true});
+ rows+=line('Средняя ставка косвенного ФОТ, '+currency+'/чел.-ч',hours(other,'indirectPeople')?expense(a,'indirectPayroll',other)/hours(other,'indirectPeople'):0,hours(current,'indirectPeople')?expense(b,'indirectPayroll',current)/hours(current,'indirectPeople'):0,{raw:true});
+ rows+=line('Техника, маш.-ч',sum(other.drivers.equipmentHours||[]),sum(current.drivers.equipmentHours||[]),{raw:true});
+ rows+=line('Средняя стоимость техники, '+currency+'/маш.-ч',sum(other.drivers.equipmentHours||[])?expense(a,'equipment',other)/sum(other.drivers.equipmentHours):0,sum(current.drivers.equipmentHours||[])?expense(b,'equipment',current)/sum(current.drivers.equipmentHours):0,{raw:true});
+ const rev0=amount(a,'revenue',other),rev1=amount(b,'revenue',current),incomeResidual=rev1-rev0-analysis.total.volume-analysis.total.price;
+ rows+=section('Доходы');rows+=line('Доходы, всего',rev0,rev1,{kind:'total'});
+ rows+=reason('Объём работ · все сопоставленные виды',analysis.total.volume)+reason('Расценка работ · все сопоставленные виды',analysis.total.price)+reason('Прочие доходы, календарь и отличие оценки BOQ',incomeResidual);
+ rows+=`<tr class="factor-subhead"><td colspan="4">Ключевые работы · денежная оценка и причины</td></tr>`;
+ for(const x of workRows)rows+=line(x.label,x.base,x.current,{level:1})+reason('Объём: '+number(x.q0,true)+' → '+number(x.q1,true)+' '+x.unit,x.volume)+reason('Цена: '+number(x.p0||0,true)+' → '+number(x.p1||0,true)+' '+currency+'/'+x.unit,x.price);
+ if(ranked.other)rows+=line(ranked.other.label,ranked.other.base,ranked.other.current,{level:1})+reason('Объём остальных работ',ranked.other.volume)+reason('Расценка остальных работ',ranked.other.price);
+ rows+=section('Расходы');rows+=line('Расходы, всего',amount(a,'costs',other),amount(b,'costs',current),{kind:'total'});
+ for(const [group,label] of [['direct','Прямые'],['indirect','Косвенные']]){
+  rows+=line(label,amount(a,group,other),amount(b,group,current),{level:1,kind:'group'});
+  for(const def of COST_DEFS.filter(x=>x[0]===group)){
+   const key=def[2];if(key==='payroll')rows+=keyCost(key,def[1],v=>hours(v,'directPeople'),'чел.-ч');
+   else if(key==='indirectPayroll')rows+=keyCost(key,def[1],v=>hours(v,'indirectPeople'),'чел.-ч');
+   else if(key==='equipment')rows+=keyCost(key,def[1],v=>sum(v.drivers.equipmentHours||[]),'маш.-ч');
+   else rows+=line(def[1],expense(a,key,other),expense(b,key,current),{level:2});
+  }
+ }
+ rows+=section('Итог');rows+=line('Финансовый результат',amount(a,'profit',other),amount(b,'profit',current),{kind:'total'});
+ rows+=reason('Изменение доходов',rev1-rev0)+reason('Изменение расходов',-(amount(b,'costs',current)-amount(a,'costs',other)));
+ rows+=line('CF накопительно на конец года',money(a.cumulative.at(-1),other),money(b.cumulative.at(-1),current),{kind:'total'});
+ $('factorTable').innerHTML=`<div class="factor-context">Текущая: <b>${esc(current.name)} · ${current.year}</b> · сравниваемая: <b>${esc(other.name)} · ${other.year}</b> · суммы в ${esc(unitName(currency))}</div><div class="tablewrap factor-bridge-wrap"><table class="factor-bridge"><thead><tr><th>Наименование статей</th><th>Текущая модель</th><th>Модель сравниваемая</th><th>Отклонение<br><small>текущая − сравниваемая</small></th></tr></thead><tbody>${rows}</tbody></table></div><p class="sub factor-explanation">Расчётные чел.-ч = помесячный FTE × 260. Средняя ставка = начисленный ФОТ / расчётные чел.-ч; стоимость маш.-ч = расходы на технику / маш.-ч. Фактор объёма использует ставку сравниваемой модели, фактор ставки — объём текущей. При отсутствии часов вся разница остаётся в прочих изменениях. Косвенная техника не выделена отдельной статьёй источника.</p>`;
 }
 function changeParameter(e){if(!editMode||!version())return;const el=e.target,v=version();try{
  if(el.hasAttribute('data-material-markup')){const value=Number(el.value);if(el.value===''||!Number.isFinite(value)||value<0||value>1000)throw Error('Укажите наценку материалов от 0 до 1000%.');v.costSourceBasis=v.costSourceBasis||{};v.costSourceBasis.materialMarkupPercent=value;}
