@@ -322,7 +322,7 @@ function residualFactor({base=0,current=0,explained=0}={}){return number(current
 function effectiveCostBridge({baseCost=0,currentCost=0,baseQuantity=0,currentQuantity=0}={}){
  const q0=number(baseQuantity),q1=number(currentQuantity),c0=number(baseCost),c1=number(currentCost);
  const rate0=q0>0?c0/q0:null,rate1=q1>0?c1/q1:null;
- if(rate0===null||rate1===null)return{rate0,rate1,volume:0,price:0,remainder:c1-c0};
+ if(rate0===null||rate1===null)return{rate0,rate1,volume:0,price:c1-c0,remainder:0};
  const factor=factorBridge({q0,p0:rate0,q1,p1:rate1});
  return{rate0,rate1,volume:factor.volume,price:factor.price,remainder:c1-c0-factor.volume-factor.price};
 }
@@ -1072,7 +1072,7 @@ function renderComparison(){
  const analysis=CalculationCore.compareWorkItems(other.workItems||[],current.workItems||[],{baseFx:canRub?fxOf(other):1,currentFx:canRub?fxOf(current):1});
  const ranked=CalculationCore.topWorkFactors(analysis.rows,10),workRows=ranked.visible;
  const hours=(v,key)=>sum(v.drivers[key]||[])*260;
- const costBridge=(key,quantity)=>CalculationCore.effectiveCostBridge({baseCost:expense(a,key,other),currentCost:expense(b,key,current),baseQuantity:quantity(other),currentQuantity:quantity(current)});
+ const costBridge=(key,quantity)=>{const f=CalculationCore.effectiveCostBridge({baseCost:expense(a,key,other),currentCost:expense(b,key,current),baseQuantity:quantity(other),currentQuantity:quantity(current)});return{...f,price:f.price+f.remainder,remainder:0};};
  const keyCost=(key,label,quantity)=>{const left=expense(a,key,other),right=expense(b,key,current),f=costBridge(key,quantity);return line(label,left,right,{level:2,factors:f});};
  const costFactors={volume:0,price:0,remainder:0};
  let rows=section('Технико-экономические показатели');
@@ -1086,31 +1086,31 @@ function renderComparison(){
  rows+=line('Техника, маш.-ч',sum(other.drivers.equipmentHours||[]),sum(current.drivers.equipmentHours||[]),{raw:true});
  rows+=line('Средняя стоимость техники, '+currency+'/маш.-ч',sum(other.drivers.equipmentHours||[])?expense(a,'equipment',other)/sum(other.drivers.equipmentHours):0,sum(current.drivers.equipmentHours||[])?expense(b,'equipment',current)/sum(current.drivers.equipmentHours):0,{raw:true});
  const rev0=amount(a,'revenue',other),rev1=amount(b,'revenue',current),incomeResidual=rev1-rev0-analysis.total.volume-analysis.total.price;
- rows+=section('Доходы');rows+=line('Доходы, всего',rev0,rev1,{kind:'total',factors:{volume:analysis.total.volume,price:analysis.total.price,remainder:incomeResidual}});
+ rows+=section('Доходы');rows+=line('Доходы, всего',rev0,rev1,{kind:'total',factors:{volume:analysis.total.volume,price:analysis.total.price+incomeResidual,remainder:0}});
  rows+=`<tr class="factor-subhead"><td colspan="7">Ключевые работы · денежная оценка и причины</td></tr>`;
- for(const x of workRows)rows+=line(x.label,x.base,x.current,{level:1,factors:{volume:x.volume,price:x.price,remainder:x.current-x.base-x.volume-x.price}});
- if(ranked.other)rows+=line(ranked.other.label,ranked.other.base,ranked.other.current,{level:1,factors:{volume:ranked.other.volume,price:ranked.other.price,remainder:ranked.other.current-ranked.other.base-ranked.other.volume-ranked.other.price}});
+ for(const x of workRows)rows+=line(x.label,x.base,x.current,{level:1,factors:{volume:x.volume,price:x.current-x.base-x.volume,remainder:0}});
+ if(ranked.other)rows+=line(ranked.other.label,ranked.other.base,ranked.other.current,{level:1,factors:{volume:ranked.other.volume,price:ranked.other.current-ranked.other.base-ranked.other.volume,remainder:0}});
  let costRows='';
  for(const [group,label] of [['direct','Прямые'],['indirect','Косвенные']]){
   const groupFactors={volume:0,price:0,remainder:0};let detail='';
   for(const def of COST_DEFS.filter(x=>x[0]===group)){
    const key=def[2],quantity=key==='payroll'?v=>hours(v,'directPeople'):key==='indirectPayroll'?v=>hours(v,'indirectPeople'):key==='equipment'?v=>sum(v.drivers.equipmentHours||[]):null;
-   const f=quantity?costBridge(key,quantity):{volume:0,price:0,remainder:expense(b,key,current)-expense(a,key,other)};
+   const f=quantity?costBridge(key,quantity):{volume:0,price:expense(b,key,current)-expense(a,key,other),remainder:0};
    for(const part of ['volume','price','remainder'])groupFactors[part]+=f[part];
    detail+=line(def[1],expense(a,key,other),expense(b,key,current),{level:2,factors:f});
   }
-  groupFactors.remainder+=amount(b,group,current)-amount(a,group,other)-groupFactors.volume-groupFactors.price-groupFactors.remainder;
+  groupFactors.price+=amount(b,group,current)-amount(a,group,other)-groupFactors.volume-groupFactors.price;
   for(const part of ['volume','price','remainder'])costFactors[part]+=groupFactors[part];
   costRows+=line(label,amount(a,group,other),amount(b,group,current),{level:1,kind:'group',factors:groupFactors})+detail;
  }
  const costDelta=amount(b,'costs',current)-amount(a,'costs',other);
- costFactors.remainder+=costDelta-costFactors.volume-costFactors.price-costFactors.remainder;
+ costFactors.price+=costDelta-costFactors.volume-costFactors.price;
  rows+=section('Расходы')+line('Расходы, всего',amount(a,'costs',other),amount(b,'costs',current),{kind:'total',factors:costFactors})+costRows;
  const profit0=amount(a,'profit',other),profit1=amount(b,'profit',current),profitFactors={volume:analysis.total.volume-costFactors.volume,price:analysis.total.price-costFactors.price,remainder:0};
- profitFactors.remainder=profit1-profit0-profitFactors.volume-profitFactors.price;
+ profitFactors.price+=profit1-profit0-profitFactors.volume-profitFactors.price;
  rows+=section('Итог');rows+=line('Финансовый результат',profit0,profit1,{kind:'total',factors:profitFactors});
  rows+=line('CF накопительно на конец года',money(a.cumulative.at(-1),other),money(b.cumulative.at(-1),current),{kind:'total'});
- $('factorTable').innerHTML=`<div class="factor-context">Текущая: <b>${esc(current.name)} · ${current.year}</b> · сравниваемая: <b>${esc(other.name)} · ${other.year}</b> · суммы в ${esc(unitName(currency))}</div><div class="tablewrap factor-bridge-wrap"><table class="factor-bridge"><thead><tr><th>Наименование статей</th><th>Текущая модель</th><th>Модель сравниваемая</th><th>Отклонение<br><small>текущая − сравниваемая</small></th><th>Фактор объёма</th><th>Фактор цены</th><th>Прочее</th></tr></thead><tbody>${rows}</tbody></table></div><p class="sub factor-explanation">Отклонение = фактор объёма + фактор цены + прочее. Расчётные чел.-ч = помесячный FTE × 260. Средняя ставка = начисленный ФОТ / расчётные чел.-ч; стоимость маш.-ч = расходы на технику / маш.-ч. Фактор объёма использует ставку сравниваемой модели, фактор цены — объём текущей. При отсутствии часов вся разница остаётся в прочих изменениях. Косвенная техника не выделена отдельной статьёй источника.</p>`;
+ $('factorTable').innerHTML=`<div class="factor-context">Текущая: <b>${esc(current.name)} · ${current.year}</b> · сравниваемая: <b>${esc(other.name)} · ${other.year}</b> · суммы в ${esc(unitName(currency))}</div><div class="tablewrap factor-bridge-wrap"><table class="factor-bridge"><thead><tr><th>Наименование статей</th><th>Текущая модель</th><th>Модель сравниваемая</th><th>Отклонение<br><small>текущая − сравниваемая</small></th><th>Фактор объёма</th><th>Фактор цены</th><th>Прочее</th></tr></thead><tbody>${rows}</tbody></table></div><p class="sub factor-explanation">Отклонение = фактор объёма + фактор цены. Если нет сопоставимых физических параметров, вся разница включена в фактор цены; он включает изменения прочих доходов и статей затрат без часовой базы. Расчётные чел.-ч = помесячный FTE × 260. Средняя ставка = начисленный ФОТ / расчётные чел.-ч; стоимость маш.-ч = расходы на технику / маш.-ч. Для сопоставимых объёмов фактор объёма использует ставку сравниваемой модели, фактор цены — объём текущей. Косвенная техника не выделена отдельной статьёй источника.</p>`;
 }
 function changeParameter(e){if(!editMode||!version())return;const el=e.target,v=version();try{
  if(el.hasAttribute('data-material-markup')){const value=Number(el.value);if(el.value===''||!Number.isFinite(value)||value<0||value>1000)throw Error('Укажите наценку материалов от 0 до 1000%.');v.costSourceBasis=v.costSourceBasis||{};v.costSourceBasis.materialMarkupPercent=value;}
