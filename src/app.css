@@ -100,7 +100,7 @@ th,th:first-child{background:#eaf0f2;color:#24444d}tr.total td,.model-table .tre
 .model-table tr[data-tree-key="model-top-works"] td:first-child,.portfolio-model-table tr[data-tree-key="portfolio-works"] td:first-child{background:#eaf2f3;color:var(--navy);font-weight:700}
 .period-table tr[data-tree-key="model-top-works"] .metric-col{background:#eaf2f3}
 /* Left navigation keeps a complete outline while the page scrolls. */
-.portfolio{top:12px;height:calc(100dvh - 24px);max-height:calc(100dvh - 24px);margin:0 0 0 12px;padding:12px;background:#f8fafb;border:1px solid #d9e3e7;border-radius:12px;box-shadow:0 2px 12px #1b34350b}
+.portfolio{top:12px;height:auto;max-height:calc(100dvh - 136px);margin:0 0 0 12px;padding:12px;background:#f8fafb;border:1px solid #d9e3e7;border-radius:12px;box-shadow:0 2px 12px #1b34350b}
 .contractor-panel{padding:12px 9px 9px;background:#fff;border:1px solid #d9e3e7;border-radius:10px;box-shadow:0 1px 3px #1b343508}
 .portfolio .sectionhead{margin-bottom:8px;padding:0 7px 12px;border-bottom:1px solid #e5ebee}
 .portfolio .sectionhead h3{font-size:13px;letter-spacing:.02em;color:#52636d}
