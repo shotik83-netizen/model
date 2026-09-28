@@ -949,11 +949,12 @@ function renderModelComments(){
  const significant=(n,year)=>Math.abs(displayAmount(n,year)/state.unit)>=0.05;
  for(const {v:year,r} of periods){
   const meta=year.workSourceMeta||{},label=String(year.year),unit=unitName(displayCode(year)),value=n=>fmt(n,year),note=(key,message)=>add(label+':'+key,message);
-  if(year.dataMode==='source_partial')note('mode',`${label}: расчёт предварительный; проверьте исходные документы и строки ниже.`);
-  for(const warning of [...(meta.blockers||[]),...(meta.warnings||[])])note('source:'+warning,`${label}, источники: ${warning}`);
+  const warnings=[...(meta.blockers||[]),...(meta.warnings||[])];
+  if(year.dataMode==='source_partial'&&!warnings.length&&!meta.error&&!meta.historicalCostSource)note('mode',`${label}: расчёт предварительный; проверьте исходные документы.`);
+  for(const warning of warnings)if(!(meta.historicalCostSource&&/расходы.*перенесен|факт расходов перенес/i.test(warning)))note('source:'+warning,`${label}, источники: ${warning}`);
   if(meta.error)note('error',`${label}, источники: обновление не удалось (${meta.error}); сверяйте расчёт с последним успешно загруженным набором.`);
-  if(meta.ignoredRows)note('ignored',`${label}, КСГ: ${meta.ignoredRows} строк исключено без сопоставления KQ-2; проверьте mapping и влияние на доходы.`);
-  if(meta.unmatchedRows)note('unmatched',`${label}, КСГ: ${meta.unmatchedRows} строк без оценки KQ-2; назначьте расценки перед подтверждением доходов.`);
+  if(meta.ignoredRows)note('ignored',`${label}, КСГ: строк без сопоставления KQ-2 — ${meta.ignoredRows}; они исключены из расчёта. Проверьте mapping и влияние на доходы.`);
+  if(meta.unmatchedRows)note('unmatched',`${label}, КСГ: строк без оценки KQ-2 — ${meta.unmatchedRows}; назначьте расценки перед подтверждением доходов.`);
   if(year.currency!=='RUB'&&fxOf(year)<=0)note('fx',`${label}, валюта: курс ${year.currency}/RUB не задан; рублёвые итоги и сравнение версий требуют курса.`);
   if(meta.historicalCostSource)note('historical',`${label}, расходы: факт перенесён из ${meta.historicalCostSource}; сверьте статьи с первичными документами.`);
   if(meta.advanceCounterparties?.length)note('counterparty',`${label}, авансы: контрагент в реестре отличается (${meta.advanceCounterparties.join(', ')}); подтвердите основание зачёта.`);
