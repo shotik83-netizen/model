@@ -15,6 +15,9 @@ assert.equal(CalculationCore.fromRub(915,91.5),10);
 assert.equal(CalculationCore.rateInContractCurrency(8000,'RUB','EUR',100),80,'contract rate converts RUB cost to EUR');
 assert.equal(CalculationCore.rateInContractCurrency(80,'CNY','RUB',12),960,'contract rate converts foreign cost to RUB');
 assert.throws(()=>CalculationCore.rateInContractCurrency(80,'USD','EUR',100),/нет курса/,'no unsupported cross currency conversion');
+assert.match(CalculationCore.checkResourceCoverage(2027*12+10,{'Персонал':2026*12+7,'Техника':null}).join(' '),/раньше КСГ/);
+assert.deepEqual(CalculationCore.checkResourceCoverage(2027*12+10,{'Персонал':2028*12+2,'Техника':2027*12+10}),[]);
+assert.match(CalculationCore.checkResourceCoverage(2027*12+10,{'Персонал':2028*12+3,'Техника':2027*12+10}).join(' '),/выходит за КСГ/);
 
 for(const test of cases){
  const result=CalculationCore.factorBridge(test);
