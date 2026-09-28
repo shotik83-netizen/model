@@ -10,7 +10,7 @@ const series=(n=0)=>Array(12).fill(n),result=(revenue,cost)=>({revenue:series(re
 const base={id:'base',name:'База',year:2026,currency:'USD',fxRate:80,drivers:{directPeople:series(2),indirectPeople:series(1),equipmentHours:series(10)},workItems:[{stableKey:'work',name:'Монтаж',unit:'м',kq2:'KQ-01',rate:10,volumes:series(2)}]};
 const current={...base,id:'current',name:'Текущая',year:2027,drivers:{directPeople:series(3),indirectPeople:series(2),equipmentHours:series(12)},workItems:[{stableKey:'work',name:'Монтаж',unit:'м',kq2:'KQ-01',rate:12,volumes:series(3)}]};
 const elements={compareVersion:{value:'base',innerHTML:''},factorCurrentVersion:{textContent:''},factorTable:{innerHTML:''}};
-const context={CalculationCore:core,COST_DEFS:[['direct','Заработная плата','payroll'],['direct','Строительная техника','equipment'],['indirect','Заработная плата','indirectPayroll']],state:{unit:1000000,results:result(20,10)},$:id=>elements[id],version:()=>current,contract:()=>({versions:[base,current]}),calcModel:()=>result(15,8),fxOf:v=>v.fxRate,rub:(n,v)=>n*v,sum:arr=>arr.reduce((a,b)=>a+Number(b||0),0),esc:s=>String(s).replaceAll('&','&amp;'),unitName:()=> 'млн RUB'};
+const context={CalculationCore:core,COST_DEFS:[['direct','Заработная плата','payroll'],['direct','Строительная техника','equipment'],['indirect','Заработная плата','indirectPayroll']],state:{unit:1000000,results:result(20,10)},$:id=>elements[id],version:()=>current,contract:()=>({versions:[base,current]}),calcModel:()=>result(15,8),fxOf:v=>v.fxRate,rub:(n,v)=>n*v.fxRate,sum:arr=>arr.reduce((a,b)=>a+Number(b||0),0),esc:s=>String(s).replaceAll('&','&amp;'),unitName:()=> 'млн RUB'};
 vm.createContext(context);vm.runInContext(source.slice(start,end)+';this.renderComparison=renderComparison;',context);
 context.renderComparison();
 const html=elements.factorTable.innerHTML;
@@ -20,8 +20,15 @@ assert.match(html,/База · 2026/);
 assert.match(html,/Ключевые физические объёмы/);
 assert.match(html,/Прямой труд, расчётные чел.-ч/);
 assert.match(html,/Средняя ставка прямого ФОТ/);
-assert.match(html,/Объём · чел.-ч/);
-assert.match(html,/Средняя ставка за маш.-ч/);
+assert.match(html,/<th>Фактор объёма<\/th><th>Фактор цены<\/th><th>Прочее<\/th>/);
+assert.doesNotMatch(html,/class="factor-reason"/);
+for(const row of html.matchAll(/<tr class="factor-(?:line|total|group) level-\d+">(.*?)<\/tr>/g)){
+ const cells=[...row[1].matchAll(/<td[^>]*>(.*?)<\/td>/g)].map(x=>x[1].replace(/<[^>]*>/g,''));
+ assert.equal(cells.length,7);
+ if(cells[4]==='—'&&cells[5]==='—'&&cells[6]==='—')continue;
+ const parse=x=>x==='—'?0:Number(x.replace(/\s/g,'').replace(',','.'));
+ assert.ok(Math.abs(parse(cells[3])-parse(cells[4])-parse(cells[5])-parse(cells[6]))<=.21,cells.join(' | '));
+}
 assert.match(html,/Косвенные/);
 assert.match(html,/Финансовый результат/);
 console.log('FACTOR BRIDGE VIEW: OK');
