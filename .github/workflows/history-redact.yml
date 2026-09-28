@@ -1,0 +1,91 @@
+name: One-time source history redaction
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  redact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Rewrite and verify source history
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          before="$(git rev-parse HEAD)"
+          tree="$(git rev-parse HEAD^{tree})"
+          cat > /tmp/sanitize_history.py <<'PY'
+          import io
+          import re
+          import zipfile
+          OLD = "\u041f\u043e\u043d\u0434\u0435\u0440\u0430"
+          NEW = "Подрядчик 1"
+          PATTERNS = [
+              re.compile(r'ООО\s*&quot;' + OLD + r'-ИНДУСТРИ&quot;', re.I),
+              re.compile(r'ООО\s*"' + OLD + r'-ИНДУСТРИ"', re.I),
+              re.compile(OLD + r'-ИНДУСТРИ,\s*ООО', re.I),
+              re.compile(OLD + r'-ИНДУСТРИ', re.I),
+              re.compile(OLD, re.I),
+              re.compile('po' + 'ndera', re.I),
+          ]
+          def sanitize(data):
+              if data.startswith(b'PK\x03\x04'):
+                  try:
+                      with zipfile.ZipFile(io.BytesIO(data)) as source:
+                          output = io.BytesIO()
+                          changed = False
+                          with zipfile.ZipFile(output, 'w') as target:
+                              for item in source.infolist():
+                                  old = source.read(item.filename)
+                                  new = sanitize(old)
+                                  changed |= new != old
+                                  target.writestr(item, new)
+                          return output.getvalue() if changed else data
+                  except (zipfile.BadZipFile, RuntimeError):
+                      pass
+              try:
+                  value = data.decode('utf-8')
+              except UnicodeDecodeError:
+                  return data
+              original = value
+              for pattern in PATTERNS:
+                  value = pattern.sub(NEW, value)
+              return value.encode('utf-8') if value != original else data
+          PY
+          python3 -m pip install --user git-filter-repo
+          export PATH="$HOME/.local/bin:$PATH"
+          git filter-repo --force --prune-empty never --prune-degenerate never --blob-callback 'import sys; sys.path.insert(0, "/tmp"); from sanitize_history import sanitize; blob.data = sanitize(blob.data)'
+          test "$(git rev-parse main^{tree})" = "$tree"
+          test "$(git rev-list --count main)" -ge 496
+          cat > /tmp/audit.py <<'PY'
+          import io, re, subprocess, zipfile
+          pattern = re.compile('\u043f\u043e\u043d\u0434\u0435\u0440\u0430|' + 'po' + 'ndera', re.I)
+          objects = [line.split()[0] for line in subprocess.check_output(['git','rev-list','--objects','--all']).splitlines()]
+          process = subprocess.Popen(['git','cat-file','--batch'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+          def check(data):
+              if data.startswith(b'PK\x03\x04'):
+                  try:
+                      with zipfile.ZipFile(io.BytesIO(data)) as archive:
+                          for name in archive.namelist():
+                              assert not pattern.search(name), name
+                              check(archive.read(name))
+                      return
+                  except zipfile.BadZipFile:
+                      pass
+              assert not pattern.search(data.decode('utf-8', 'ignore'))
+          for oid in objects:
+              process.stdin.write(oid+b'\n'); process.stdin.flush()
+              header = process.stdout.readline().split()
+              data = process.stdout.read(int(header[2])); process.stdout.read(1)
+              check(data)
+          process.stdin.close(); process.wait()
+          print('Clean objects:',len(objects))
+          PY
+          python3 /tmp/audit.py
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push --force-with-lease="refs/heads/main:$before" origin main:main
