@@ -17,6 +17,15 @@ function recognizeKsgSchedule(smr,mtr,weights=[.7,.18,.12]){
  if(!Array.isArray(smr)||!Array.isArray(mtr)||smr.length!==mtr.length||weights.length!==3||Math.abs(sum(weights)-1)>1e-12)throw Error('Некорректный график выполнения КСГ.');
  return smr.map((_,i)=>sum(weights.map((weight,lag)=>weight*(number(smr[i-lag])+number(mtr[i-lag])))));
 }
+function checkResourceCoverage(workEnd, resources, allowedTailMonths=4){
+ const issues=[];
+ for(const [label,end] of Object.entries(resources)){
+  if(!Number.isInteger(end))issues.push(`${label}: график не загружен или срок не подтверждён.`);
+  else if(end<workEnd)issues.push(`${label}: график заканчивается раньше КСГ на ${workEnd-end} мес.`);
+  else if(end-workEnd>allowedTailMonths)issues.push(`${label}: график выходит за КСГ на ${end-workEnd} мес. (допустимо до ${allowedTailMonths}).`);
+ }
+ return issues;
+}
 function ksgAcceptanceSchedule(smr,mtr,weights=[.7,.18,.12],documentationDelay=[0,0,0],actLag=1){
  if(!Array.isArray(smr)||!Array.isArray(mtr)||smr.length!==mtr.length||weights.length!==3||documentationDelay.length!==3||!Number.isInteger(actLag)||actLag<0||actLag>12||Math.abs(sum(weights)-1)>1e-12||weights.some(x=>x<0||x>1)||documentationDelay.some(x=>x<0||x>1))throw Error('Некорректный регламент выполнения или КС-2.');
  const execution=recognizeKsgSchedule(smr,mtr,weights),accepted=Array(smr.length+actLag+4).fill(0);
@@ -180,6 +189,6 @@ function calculateModel(v,costDefs){
  let balance=number(v.openingReceivable);const receivable=accepted.map((x,m)=>balance+=x-retention[m]-deductions[m]-offsets[m]-receipts[m]-factoring[m]);
  return{rows,materialCostsByKind,revenue,scheduledRevenue:calculatedRevenue,direct,indirect,costs,profit,payments,directPayments,indirectPayments,outputVat,advanceVat,offsetVat,inputVat,vatPay,operatingPayments,inflow,ncf,cumulative,cashBridge,openingCash:number(v.openingCash),openingAdvance,openingGuarantee,deferred,accepted,receipts,advances,advanceBalance,factoring,offsets,retention,guaranteeRelease,guaranteeBalance,deductions,receivable};
 }
-return{number,sum,toRub,fromRub,rateInContractCurrency,recognizeKsgSchedule,ksgAcceptanceSchedule,factorBridge,aggregateFactors,topWorkFactors,compareWorkItems,residualFactor,aggregateContractor,calculateModel};
+return{number,sum,toRub,fromRub,rateInContractCurrency,recognizeKsgSchedule,ksgAcceptanceSchedule,checkResourceCoverage,factorBridge,aggregateFactors,topWorkFactors,compareWorkItems,residualFactor,aggregateContractor,calculateModel};
 })();
 if(typeof module!=='undefined'&&module.exports)module.exports=CalculationCore;
