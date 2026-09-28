@@ -164,3 +164,10 @@ th,th:first-child{background:#eaf0f2;color:#24444d}tr.total td,.model-table .tre
 @media(max-width:1300px){.modelbar{grid-template-columns:minmax(160px,2fr) minmax(100px,1fr) minmax(110px,1fr) max-content;grid-template-areas:"version currency fx actions" "display unit precision ."}}
 @media(max-width:760px){.modelbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"version actions" "currency fx" "display unit" "precision precision"}.modelbar .model-actions{justify-self:end}}
 @media(max-width:560px){.portfolio .admin-side{position:static;left:auto;right:auto;bottom:auto;width:auto;margin-top:auto;box-shadow:none}.modelbar{grid-template-columns:minmax(0,1fr);grid-template-areas:"version" "currency" "fx" "display" "unit" "precision" "actions"}.modelbar .model-actions{width:100%;justify-self:stretch;justify-content:flex-end}}
+/* The edit switch reveals a sidebar-style save panel and lets the controls yield space smoothly. */
+.modelbar .model-actions{gap:0}
+.modelbar #saveVersionButton{display:inline-flex;align-items:center;justify-content:center;overflow:hidden;white-space:nowrap;max-width:0;min-width:0;padding-left:0;padding-right:0;margin-right:0;border-width:0;opacity:0;visibility:hidden;pointer-events:none;background:#f8fafb;color:var(--navy);font-weight:650;transition:max-width .32s ease,padding .32s ease,margin .32s ease,border-width .32s ease,opacity .25s ease,visibility 0s linear .32s}
+body.edit-mode .modelbar #saveVersionButton{max-width:155px;padding-left:10px;padding-right:10px;margin-right:6px;border-width:1px;opacity:1;visibility:visible;pointer-events:auto;transition:max-width .32s ease,padding .32s ease,margin .32s ease,border-width .32s ease,opacity .25s ease}
+.modelbar #saveVersionButton:hover{background:#edf3f5}
+.modelbar #saveVersionButton:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.modelbar #saveVersionButton{transition:none}}
