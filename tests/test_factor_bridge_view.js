@@ -28,7 +28,7 @@ assert.match(html,/Корректировка выполнения к оценк
 assert.match(html,/Корректировка к детализации прямых расходов/);
 assert.match(html,/<th>Фактор объёма<\/th><th>Фактор цены<\/th>/);
 assert.doesNotMatch(html,/class="factor-reason"/);
-for(const row of html.matchAll(/<tr class="factor-(?:line|total|group) level-\d+">(.*?)<\/tr>/g)){
+for(const row of html.matchAll(/<tr class="factor-(?:line|total|group) level-\d+"[^>]*>(.*?)<\/tr>/g)){
  const cells=[...row[1].matchAll(/<td[^>]*>(.*?)<\/td>/g)].map(x=>x[1].replace(/<[^>]*>/g,''));
  assert.equal(cells.length,6);
  if(cells[4]==='—'&&cells[5]==='—')continue;
@@ -37,5 +37,13 @@ for(const row of html.matchAll(/<tr class="factor-(?:line|total|group) level-\d+
 }
 assert.match(html,/Косвенные/);
 assert.match(html,/Финансовый результат/);
+assert.match(html,/data-factor-group="physical"/);
+assert.match(html,/data-factor-parent="physical" hidden/);
+assert.match(html,/data-factor-group="income-work"/);
+assert.match(html,/data-factor-parent="income-work" hidden/);
+assert.match(html,/data-factor-group="direct"/);
+assert.match(html,/data-factor-parent="direct" hidden/);
+assert.match(html,/data-factor-group="indirect"/);
+assert.match(html,/data-factor-parent="indirect" hidden/);
 }
 console.log('FACTOR BRIDGE VIEW: OK');
