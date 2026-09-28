@@ -150,3 +150,5 @@ th,th:first-child{background:#eaf0f2;color:#24444d}tr.total td,.model-table .tre
 .factor-drill>summary,.factor-other td{background:#f4f7f8}
 /* КФО has the same heading row as the other expandable articles. */
 .model-table tr[data-tree-key="model-top-works"] td,.portfolio-model-table tr[data-tree-key="portfolio-works"] td,.model-table tr[data-tree-key="model-top-works"] td:first-child,.portfolio-model-table tr[data-tree-key="portfolio-works"] td:first-child,.period-table tr[data-tree-key="model-top-works"] .metric-col{background:#fff;color:var(--text);font-weight:650;border-top:0}
+
+#dataBanner:not(.blocking){display:none}.model-comments{margin-top:18px}.model-comment-list{padding:18px 22px}.model-comment-list h3{margin:0 0 10px}.model-comment-list ol{margin:0;padding-left:23px}.model-comment-list li{line-height:1.5;margin:7px 0}
