@@ -21,6 +21,7 @@ const context = {
   normalize: () => {},
   sourceCache: {clear: () => {}},
   pendingContractors: {clear: () => {}},
+  setDataLoadStatus: () => {},
 };
 vm.createContext(context);
 vm.runInContext(snapshot + '\n' + apply + '\nthis.applyConfig=applyConfig;this.configSnapshot=configSnapshot;', context);

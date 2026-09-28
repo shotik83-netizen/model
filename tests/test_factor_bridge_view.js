@@ -10,9 +10,12 @@ const series=(n=0)=>Array(12).fill(n),result=(revenue,cost)=>({revenue:series(re
 const base={id:'base',name:'База',year:2026,currency:'USD',fxRate:80,drivers:{directPeople:series(2),indirectPeople:series(1),equipmentHours:series(10)},workItems:[{stableKey:'work',name:'Монтаж',unit:'м',kq2:'KQ-01',rate:10,volumes:series(2)}]};
 const current={...base,id:'current',name:'Текущая',year:2027,drivers:{directPeople:series(3),indirectPeople:series(2),equipmentHours:series(12)},workItems:[{stableKey:'work',name:'Монтаж',unit:'м',kq2:'KQ-01',rate:12,volumes:series(3)}]};
 const elements={compareVersion:{value:'base',innerHTML:''},factorCurrentVersion:{textContent:''},factorTable:{innerHTML:''}};
-const context={CalculationCore:core,COST_DEFS:[['direct','Заработная плата','payroll'],['direct','Строительная техника','equipment'],['indirect','Заработная плата','indirectPayroll']],state:{unit:1000000,results:result(20,10)},$:id=>elements[id],version:()=>current,contract:()=>({versions:[base,current]}),calcModel:()=>result(15,8),fxOf:v=>v.fxRate,rub:(n,v)=>n*v.fxRate,sum:arr=>arr.reduce((a,b)=>a+Number(b||0),0),esc:s=>String(s).replaceAll('&','&amp;'),unitName:()=> 'млн RUB'};
+const context={CalculationCore:core,COST_DEFS:[['direct','Заработная плата','payroll'],['direct','Строительная техника','equipment'],['indirect','Заработная плата','indirectPayroll']],state:{unit:1000000,precision:0,results:result(20,10)},$:id=>elements[id],version:()=>current,contract:()=>({versions:[base,current]}),calcModel:()=>result(15,8),fxOf:v=>v.fxRate,rub:(n,v)=>n*v.fxRate,sum:arr=>arr.reduce((a,b)=>a+Number(b||0),0),esc:s=>String(s).replaceAll('&','&amp;'),unitName:()=> 'млн RUB'};
+const display=(n,scale=1)=>{const value=Number((n/scale).toFixed(context.state.precision));return value===0?'—':value.toLocaleString('ru-RU',{minimumFractionDigits:context.state.precision,maximumFractionDigits:context.state.precision});};
+context.fmtRaw=n=>display(n,context.state.unit);context.fmtWhole=n=>display(n);
 vm.createContext(context);vm.runInContext(source.slice(start,end)+';this.renderComparison=renderComparison;',context);
-context.renderComparison();
+for(const precision of [0,1,2]){
+context.state.precision=precision;context.renderComparison();
 const html=elements.factorTable.innerHTML;
 assert.match(html,/Текущая модель<\/th><th>Модель сравниваемая<\/th><th>Отклонение/);
 assert.match(html,/Текущая · 2027/);
@@ -34,4 +37,5 @@ for(const row of html.matchAll(/<tr class="factor-(?:line|total|group) level-\d+
 }
 assert.match(html,/Косвенные/);
 assert.match(html,/Финансовый результат/);
+}
 console.log('FACTOR BRIDGE VIEW: OK');
