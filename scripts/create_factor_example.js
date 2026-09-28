@@ -19,6 +19,7 @@ const items=allItems.filter(x=>x.matchRule==='exact');
 const revenue=ctx.exampleFns.buildKsgRevenue(input.ksg,2026,estimate.estimate,items);
 const next=JSON.parse(JSON.stringify(base));
 next.id='v_factor_example_2026';next.name='Факторный пример 2026 · объём + цена';
+delete next.savedModel;
 next.exampleDescription='Копия исходных BOQ и КСГ: BOQ!Y64 +5%, КСГ!Y5 +10%; другие исходные документы не изменены.';
 next.exampleEdits={boq:{row:64,column:'Y',factor:1.05},ksg:{row:5,column:'Y',factor:1.1}};delete next.sourceFiles;
 next.kqEstimate=ctx.DataAdapter.workChainControl(estimate.estimate,items).rows;
