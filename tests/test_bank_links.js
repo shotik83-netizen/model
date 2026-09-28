@@ -31,9 +31,10 @@ const bankRow=(party,type,contract='ERP-1',purpose='Оплата по догов
  const x=Array(17).fill('');x[1]=new Date('2026-03-03T00:00:00Z');x[3]=party;x[4]=contract;x[5]='USD';x[6]=120;x[7]=100;x[12]=purpose;x[14]=type;x[16]='Проект';return x;
 };
 const olderAdvance=bankRow('Другой подрядчик','Аванс');olderAdvance[1]=new Date('2025-12-03T00:00:00Z');
-const bank={sheets:[{name:'Платежи',rows:[[],bankRow('Другой подрядчик','Аванс'),bankRow('Другой подрядчик','Оплата по факту'),bankRow('ООО Подрядчик','Оплата по факту'),bankRow('Другой подрядчик','Аванс','Другой ERP'),olderAdvance]}]};
+const reversal=bankRow('Другой подрядчик','Аванс');reversal[6]=-24;reversal[7]=-20;
+const bank={sheets:[{name:'Платежи',rows:[[],bankRow('Другой подрядчик','Аванс'),reversal,bankRow('Другой подрядчик','Оплата по факту'),bankRow('ООО Подрядчик','Оплата по факту'),bankRow('Другой подрядчик','Аванс','Другой ERP'),olderAdvance]}]};
 const actual=bankCtx.buildBankActuals(bank,{contractor:'ООО Подрядчик',contractNumber:'ERP-1',project:'Проект'},'4700134128',2026,'USD');
-assert.equal(actual.advances[2],100,'advance with exact contract, project and purpose is included even when payer differs');
+assert.equal(actual.advances[2],80,'advance and its signed reversal are included when contract, project and purpose match');
 assert.equal(actual.payments[2],100,'ordinary payment still requires the named counterparty');
 assert.deepEqual([...actual.advanceCounterparties],['Другой подрядчик'],'counterparty difference is disclosed');
 const opening=bankCtx.buildBankActuals(bank,{contractor:'ООО Подрядчик',contractNumber:'ERP-1',project:'Проект'},'4700134128',2026,'USD',{beforeYear:2026});
