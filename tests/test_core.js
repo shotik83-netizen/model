@@ -47,6 +47,16 @@ assert.equal(ranked.hiddenCount,2,'retain count of secondary works');
 assert.equal(ranked.other.base,10,'aggregate secondary base without loss');
 assert.equal(CalculationCore.aggregateFactors([...ranked.visible,ranked.other]).variance,ranked.total.variance,'retain full factor bridge');
 assert.equal(CalculationCore.residualFactor({base:100,current:145,explained:30}),15,'residual factor');
+const wage=CalculationCore.effectiveCostBridge({baseCost:1000,currentCost:1440,baseQuantity:100,currentQuantity:120});
+assert.equal(wage.rate0,10,'average base hourly wage');
+assert.equal(wage.rate1,12,'average current hourly wage');
+assert.equal(wage.volume,200,'hours change at the compared rate');
+assert.equal(wage.price,240,'rate change at current hours');
+assert.equal(wage.volume+wage.price+wage.remainder,440,'salary expense bridge closes');
+const missingHours=CalculationCore.effectiveCostBridge({baseCost:100,currentCost:240,baseQuantity:0,currentQuantity:20});
+assert.equal(missingHours.volume,0,'no invented base hourly wage');
+assert.equal(missingHours.price,0,'no invented rate factor without hours');
+assert.equal(missingHours.remainder,140,'unexplained expense is visible');
 
 const boqRecords=[
  {kqCode:'KQ.01',kqName:'Земляные работы',quantity:10,laborHours:20,machineHours:3,cost:1000,materialsCost:70},
