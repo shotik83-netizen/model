@@ -8,7 +8,7 @@ const end = code.indexOf('function makeTable(', start);
 let calculations = 0;
 const context = {
   clone: value => JSON.parse(JSON.stringify(value)),
-  CalculationCore: {calculateModel: () => {calculations++; return {profit: [42],cumulative:[0]};}},
+  CalculationCore: {calculateModel: v => {calculations++; if(v.id==='v0')return {profit:[42],cumulative:[100],advanceBalance:[20],guaranteeBalance:[12],receivable:[9]};if(v.id==='v2'){assert.strictEqual(v.openingCash,100);assert.strictEqual(v.openingAdvance,20);assert.strictEqual(v.openingGuarantee,12);assert.strictEqual(v.openingReceivable,9);}return {profit: [42],cumulative:[0],advanceBalance:[0],guaranteeBalance:[0],receivable:[0]};}},
   COST_DEFS: [],
   contract: () => ({versions: []}),
   version: () => undefined,

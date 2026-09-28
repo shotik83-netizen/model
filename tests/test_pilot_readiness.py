@@ -86,4 +86,7 @@ if len(sys.argv) == 1:
     explained = total('deductions') + total('retention') + total('offsets') \
         + r['receivable'][-1] - selected.get('openingReceivable', 0) - total('advances')
     assert abs(gap - explained) < .01
+    assert abs(r['guaranteeBalance'][-1] - total('retention')) < .01
+    assert abs(r['advanceBalance'][-1] + total('offsets')) < .01
+    assert total('guaranteeRelease') == 0  # No project end has been verified for this version.
 print('PILOT READINESS GUARD: OK')
