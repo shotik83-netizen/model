@@ -19,6 +19,9 @@ jobs:
         run: node tests/test_core.js
       - name: Reconcile economy and cash-flow formulas
         run: node tests/test_economy.js
+      - name: Verify model comment rules
+        run: node tests/test_model_comments.js
+
       - name: Verify bank and primary document links
         run: node tests/test_bank_links.js
       - name: Verify contract-specific source isolation
