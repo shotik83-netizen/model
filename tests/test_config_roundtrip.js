@@ -8,7 +8,7 @@ const apply = code.match(/async function applyConfig\(o\)\{[^\n]+\}/)?.[0];
 assert(snapshot && apply, 'Config API is present');
 
 const config = JSON.parse(fs.readFileSync('config/config.json', 'utf8'));
-assert.deepStrictEqual(config.contractors.map(c => c.id), ['c1', 'c2', 'c3']);
+assert.deepStrictEqual(config.contractors.map(c => c.id), ['c1', 'c2', 'c3', 'c_mugvjjiee42h']);
 const state = {contractors: [], config: {}};
 const context = {
   state,
@@ -26,8 +26,8 @@ vm.createContext(context);
 vm.runInContext(snapshot + '\n' + apply + '\nthis.applyConfig=applyConfig;this.configSnapshot=configSnapshot;', context);
 
 context.applyConfig(config).then(() => {
-  assert.deepStrictEqual(Array.from(state.contractors, c => c.id), ['c1', 'c2', 'c3']);
+  assert.deepStrictEqual(Array.from(state.contractors, c => c.id), ['c1', 'c2', 'c3', 'c_mugvjjiee42h']);
   assert.match(state.contractors[2].loadError, /temporarily unavailable/);
-  assert.deepStrictEqual(Array.from(context.configSnapshot().contractors, c => c.id), ['c1', 'c2', 'c3']);
+  assert.deepStrictEqual(Array.from(context.configSnapshot().contractors, c => c.id), ['c1', 'c2', 'c3', 'c_mugvjjiee42h']);
   console.log('CONFIG ROUNDTRIP: OK');
 }).catch(err => {console.error(err); process.exitCode = 1;});

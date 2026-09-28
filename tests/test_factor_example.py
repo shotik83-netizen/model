@@ -7,7 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 from compare_excel_app import load_version, normalized
 root=Path(__file__).resolve().parents[1]
-book=root/'data/contractors/c1/models/model-2026-09-22.xlsx'
+book=root/'data/contractors/c1/models/model-2026-09-28-demo.xlsx'
 contract,base=load_version(book,'d_pilot_4700134128','v_pilot_2026')
 _,example=load_version(book,'d_pilot_4700134128','v_factor_example_2026')
 assert base['year']==example['year']==2026

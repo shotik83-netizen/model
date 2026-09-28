@@ -1,4 +1,4 @@
-"""Only the document-backed pilot may appear in the working portfolio."""
+"""Keep the document-backed pilot intact and mark restored examples explicitly."""
 import sys
 from pathlib import Path
 
@@ -6,21 +6,18 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 from compare_excel_app import load_version
 
-book = ROOT / 'data/contractors/c1/models/model-2026-09-22.xlsx'
+original = ROOT / 'data/contractors/c1/models/model-2026-09-22.xlsx'
+book = ROOT / 'data/contractors/c1/models/model-2026-09-28-demo.xlsx'
 _, pilot = load_version(book, 'd_pilot_4700134128', 'v_pilot_2026')
+_, original_pilot = load_version(original, 'd_pilot_4700134128', 'v_pilot_2026')
+assert pilot == original_pilot
 assert pilot['workSourceMeta']['primaryRows'] > 0
-for contract_id, version_id in (
-    ('d_pilot_4700134128', 'v_factor_example_2026'),
-    ('d_scenario_b_4700134128', 'v_scenario_b_2026'),
-):
-    try:
-        load_version(book, contract_id, version_id)
-    except ValueError:
-        pass
-    else:
-        raise AssertionError(f'Synthetic version was exported: {version_id}')
+_, factor = load_version(book, 'd_pilot_4700134128', 'v_factor_example_2026')
+_, scenario = load_version(book, 'd_scenario_b_4700134128', 'v_scenario_b_2026')
+assert factor['exampleEdits'] and 'Факторный пример' in factor['name']
+assert scenario['scenarioDerived'] and 'Расчётный' in scenario['name']
 app = (ROOT / 'src/app.js').read_text()
-assert '.filter(v=>!v.scenarioDerived&&!v.exampleEdits)' in app
-assert "if(v?.scenarioDerived||v?.exampleEdits)throw Error" in app
+assert "const exampleVersion=!!(v.exampleEdits||v.scenarioDerived" in app
+assert 'ДЕМОНСТРАЦИОННЫЙ СЦЕНАРИЙ' in app
 assert 'applyExample(' not in app
-print('LIVE DATA GATE: OK')
+print('LIVE DATA GATE: DEMO LABELS OK')
