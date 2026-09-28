@@ -43,6 +43,10 @@ if version.get('materialForecastByKq'):
 assert abs(rows['payroll'][0] - 382981.96414333646) < 0.001
 assert abs(rows['insurance'][0] - 101503.97318406111) < 0.001
 if version.get('cashFlowBasis') == 'source_model':
+    assert all(abs(income - accepted - other) < .01 for income, accepted, other in zip(
+        result['revenue'], result['accepted'], version['drivers']['otherRevenue']))
+    assert all(abs(planned - source) < .01 for planned, source in zip(
+        result['scheduledRevenue'], version['drivers']['ksgRevenue']))
     assert abs(result['inflow'][2] - version['drivers']['factoring'][2]) < 0.01
     assert abs(result['receivable'][2] - result['receivable'][1] - (version['drivers']['primaryExecuted'][2] - version['drivers']['primaryGuaranteeHold'][2] - version['drivers']['primaryDeductions'][2] - version['drivers']['payments'][2] - version['drivers']['factoring'][2] - version['drivers']['advanceOffset'][2])) < 0.01
     assert abs(result['inflow'][0] * version['fxRate'] - 120768180.8) < 0.01
@@ -65,4 +69,21 @@ else:
 assert version['paymentActualMonths'][:6] == [True] * 6
 assert len(version['workSourceMeta']['blockers']) == 2
 assert version['workSourceMeta']['resourceForecastPolicy'].startswith('Август–декабрь')
+if len(sys.argv) == 1:
+    # Check the published two-contract example, including the KS-2/cash bridge.
+    example = root / 'data/contractors/c1/models/model-2026-09-28-demo.xlsx'
+    pilot, selected = load_version(example, 'd_pilot_4700134128', 'v_pilot_2026')
+    calculated = subprocess.run(['node', str(root / 'scripts/app_model_snapshot.js')],
+                                input=json.dumps(normalized(selected, pilot, root)),
+                                text=True, capture_output=True, check=True)
+    r = json.loads(calculated.stdout)
+    total = lambda key: sum(r[key])
+    assert abs(total('revenue') - total('accepted')) < .01
+    assert abs(total('accepted') - 41996101.17) < .02
+    assert abs(total('scheduledRevenue') - 54667540.9975396) < .02
+    assert abs(total('inflow') - 36065997.63544542) < .02
+    gap = total('accepted') - total('inflow')
+    explained = total('deductions') + total('retention') + total('offsets') \
+        + r['receivable'][-1] - selected.get('openingReceivable', 0) - total('advances')
+    assert abs(gap - explained) < .01
 print('PILOT READINESS GUARD: OK')
