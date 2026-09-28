@@ -608,11 +608,12 @@ function renderComparison(){
  const a=calcModel(other),b=state.results,sameCurrency=other.currency===current.currency,canRub=fxOf(other)>0&&fxOf(current)>0;
  if(!sameCurrency&&!canRub){$('factorTable').innerHTML='<p class="note warning">Для сравнения разных валют укажите положительный договорный курс обеих версий.</p>';return;}
  const currency=canRub?'RUB':current.currency,convert=(n,v)=>canRub?rub(n,v):n;
- const number=(n,raw=false)=>{if(Math.abs(n)<1e-9)return '—';return new Intl.NumberFormat('ru-RU',{minimumFractionDigits:raw?0:1,maximumFractionDigits:raw?1:1}).format(raw?n:n/state.unit);};
+ const number=(n,raw=false)=>{const value=raw?n:n/state.unit,rounded=Math.round(value*10)/10;if(rounded===0)return '—';return new Intl.NumberFormat('ru-RU',{minimumFractionDigits:raw?0:1,maximumFractionDigits:raw?1:1}).format(rounded);};
  const money=(n,v)=>convert(n,v),amount=(r,k,v)=>money(sum(r[k]),v),expense=(r,k,v)=>money(sum(r.rows[k]),v);
  const cell=(n,raw=false)=>`<td class="${n<0?'negative':''}">${number(n,raw)}</td>`;
  const factorCell=n=>n==null?'<td>—</td>':cell(n);
- const line=(label,left,right,{level=0,kind='',raw=false,unit='',factors=null}={})=>`<tr class="factor-${kind||'line'} level-${level}"><td>${esc(label)}${unit?` <small>${esc(unit)}</small>`:''}</td>${cell(right,raw)}${cell(left,raw)}${cell(right-left,raw)}${factorCell(factors?.volume)}${factorCell(factors?.price)}${factorCell(factors?.remainder)}</tr>`;
+ const tenths=n=>Math.round(n/state.unit*10),factorCells=f=>{if(!f)return'<td>—</td><td>—</td><td>—</td>';const volume=tenths(f.volume||0),remainder=tenths(f.remainder||0),price=tenths(f.delta)-volume-remainder;return factorCell(volume*state.unit/10)+factorCell(price*state.unit/10)+factorCell(remainder*state.unit/10);};
+ const line=(label,left,right,{level=0,kind='',raw=false,unit='',factors=null}={})=>`<tr class="factor-${kind||'line'} level-${level}"><td>${esc(label)}${unit?` <small>${esc(unit)}</small>`:''}</td>${cell(right,raw)}${cell(left,raw)}${cell(right-left,raw)}${factorCells(factors&&{...factors,delta:right-left})}</tr>`;
  const section=label=>`<tr class="factor-section"><td colspan="7">${esc(label)}</td></tr>`;
  const analysis=CalculationCore.compareWorkItems(other.workItems||[],current.workItems||[],{baseFx:canRub?fxOf(other):1,currentFx:canRub?fxOf(current):1});
  const ranked=CalculationCore.topWorkFactors(analysis.rows,10),workRows=ranked.visible;
