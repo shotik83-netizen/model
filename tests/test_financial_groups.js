@@ -1,0 +1,30 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const path=require('node:path');
+const source=fs.readFileSync(path.join(__dirname,'../src/app.js'),'utf8');
+const extract=(a,b)=>source.slice(source.indexOf(a),source.indexOf(b,source.indexOf(a)));
+const series=n=>Array.from({length:12},(_,i)=>i===0?n:0);
+const v={year:2026,cashFlowBasis:'source_model',revenueBasis:'ksg',drivers:{physicalVolume:series(1),directPeople:series(1),indirectPeople:series(1),equipmentHours:series(1),otherRevenue:series(0),ks2Accepted:series(100)}};
+const zeros=series(0),r={openingCash:0,revenue:zeros,costs:zeros,direct:zeros,indirect:zeros,profit:zeros,scheduledRevenue:zeros,accepted:series(100),offsets:series(10),deductions:series(5),retention:series(8),guaranteeRelease:series(3),advanceBalance:series(7),receivable:series(0),inflow:series(60),receipts:series(40),factoring:series(4),advances:series(13),operatingPayments:zeros,directPayments:zeros,indirectPayments:zeros,payments:{},rows:{},materialCostsByKind:{},outputVat:zeros,advanceVat:zeros,offsetVat:zeros,inputVat:zeros,vatPay:zeros,ncf:zeros,cumulative:zeros};
+const context=vm.createContext({version:()=>v,MONTHS:Array(12).fill('М'),COST_DEFS:[],esc:x=>String(x),unitName:()=> 'USD',sum:a=>a.reduce((x,y)=>x+Number(y||0),0),factThrough:()=>0,summaryCells:(row,last)=>row.map(x=>`<td data-value="${x}">${x}</td>`).join('')+`<td>${last?row.at(-1):row.reduce((x,y)=>x+y,0)}</td>`});
+vm.runInContext(extract('function treeRow(', 'function rankedWorks(')+extract('function makeModelTable(', 'function makeDetailedModelTable(')+';this.makeModelTable=makeModelTable;',context);
+for(const basis of ['source_model','manual']){
+ v.cashFlowBasis=basis;
+ const html=context.makeModelTable(r);
+ const row=(label)=>{const match=[...html.matchAll(/<tr ([^>]+)><td>([^<]+)<\/td>(.*?)<\/tr>/g)].find(x=>x[2]===label);assert.ok(match,label);return{attrs:match[1],value:Number(match[3].match(/data-value="([^"]+)"/)?.[1])};};
+ assert.equal(row('Принято по КС-2').value,100);
+ assert.equal(row('Зачёты').value,15);
+ assert.equal(row('Зачёт авансов').value+row('Взаимозачёты').value,row('Зачёты').value);
+ assert.match(row('Зачёт авансов').attrs,/data-tree-parent="model-offsets"/);
+ assert.match(row('Взаимозачёты').attrs,/hidden/);
+ assert.equal(row('ГУ').value,5);
+ assert.equal(row('Удержание').value+row('Начисление к выплате').value,row('ГУ').value);
+ assert.match(row('Начисление к выплате').attrs,/data-tree-parent="model-guarantee"/);
+ assert.equal(row('Незачтённый аванс').value,7);
+ assert.equal(row('Поступления').value,60);
+ assert.equal(['Оплата КС','Факторинг','Аванс','Выплата ГУ'].reduce((n,label)=>n+row(label).value,0),row('Поступления').value);
+ assert.equal((html.match(/<td>Выплата ГУ<\/td>/g)||[]).length,1);
+}
+console.log('FINANCIAL GROUPS: OK');
