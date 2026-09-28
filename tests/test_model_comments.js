@@ -14,7 +14,7 @@ vm.createContext(context);vm.runInContext(source.slice(start,end)+';this.renderM
 context.renderModelComments();
 const html=elements.summaryComments.innerHTML;
 assert.equal(html,elements.detailComments.innerHTML);
-for(const phrase of ['2 строк исключено','1 строк без оценки','корректировка 5','разница 10','неразнесённая сумма 5','незачтённый остаток','удержанный остаток','отклонение -20','График персонала'])assert.ok(html.includes(phrase),phrase);
+for(const phrase of ['строк без сопоставления KQ-2 — 2','строк без оценки KQ-2 — 1','корректировка 5','разница 10','неразнесённая сумма 5','незачтённый остаток','удержанный остаток','отклонение -20','График персонала'])assert.ok(html.includes(phrase),phrase);
 assert.equal((html.match(/финансовый результат и CF:/g)||[]).length,1);
 result.revenue=series(85);result.accepted=series(80);result.costs=series(50);result.ncf=series(35);result.cumulative=series(1);result.advanceBalance=series(0);result.guaranteeBalance=series(0);
 context.renderModelComments();
