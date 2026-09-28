@@ -797,8 +797,13 @@ $('contractForm').onsubmit=e=>{e.preventDefault();if(!requireEdit())return;const
 $('sourceList').onclick=e=>{const b=e.target.closest('[data-source]');if(b)openSource(b.dataset.source);};
 $('sourcePreviewButton').onclick=previewFields;$('sourceSaveButton').onclick=saveSource;
 $('sourceFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{sourceDraft=collectSource();await acceptSource(await file.arrayBuffer(),file.name);}catch(err){$('sourcePreview').textContent='Ошибка чтения: '+err.message;}finally{e.target.value='';pendingSource=null;}};
-for(const el of document.querySelectorAll('[data-close]'))el.onclick=()=>$(el.dataset.close).classList.remove('show');
-for(const el of document.querySelectorAll('.modalback'))el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('show');});
-window.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modalback.show').forEach(el=>el.classList.remove('show'));});
+const guideModal=$('userGuideModal'),guideScroll=guideModal.querySelector('.guide-scroll');
+$('openUserGuide').onclick=()=>{guideModal.classList.add('show');guideScroll.scrollTop=0;guideModal.querySelectorAll('[data-guide-target]').forEach((button,i)=>{if(i===0)button.setAttribute('aria-current','true');else button.removeAttribute('aria-current');});guideModal.querySelector('.close').focus();};
+guideModal.querySelectorAll('[data-guide-target]').forEach(button=>button.onclick=()=>{guideScroll.querySelector('#'+button.dataset.guideTarget)?.scrollIntoView({block:'start'});guideModal.querySelectorAll('[data-guide-target]').forEach(item=>item.removeAttribute('aria-current'));button.setAttribute('aria-current','true');});
+guideModal.addEventListener('keydown',e=>{if(e.key!=='Tab')return;const focusable=[...guideModal.querySelectorAll('button,[tabindex="0"]')],first=focusable[0],last=focusable.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}});
+function closeModal(el){el.classList.remove('show');if(el===guideModal)$('openUserGuide').focus();}
+for(const el of document.querySelectorAll('[data-close]'))el.onclick=()=>closeModal($(el.dataset.close));
+for(const el of document.querySelectorAll('.modalback'))el.addEventListener('click',e=>{if(e.target===el)closeModal(el);});
+window.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modalback.show').forEach(closeModal);});
 window.addEventListener('beforeunload',e=>{if(dirty&&editMode){e.preventDefault();e.returnValue='';}});
 init();
