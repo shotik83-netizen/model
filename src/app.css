@@ -99,6 +99,28 @@ th,th:first-child{background:#eaf0f2;color:#24444d}tr.total td,.model-table .tre
 .model-table tr[data-tree-key="model-top-works"] td,.portfolio-model-table tr[data-tree-key="portfolio-works"] td{background:#f3f7f8;color:var(--text);font-weight:650;border-top:1px solid #d0dfe1}
 .model-table tr[data-tree-key="model-top-works"] td:first-child,.portfolio-model-table tr[data-tree-key="portfolio-works"] td:first-child{background:#eaf2f3;color:var(--navy);font-weight:700}
 .period-table tr[data-tree-key="model-top-works"] .metric-col{background:#eaf2f3}
+/* Left navigation keeps a complete outline while the page scrolls. */
+.portfolio{top:12px;height:calc(100dvh - 24px);max-height:calc(100dvh - 24px);margin:0 0 0 12px;padding:12px;background:#f8fafb;border:1px solid #d9e3e7;border-radius:12px;box-shadow:0 2px 12px #1b34350b}
+.contractor-panel{padding:12px 9px 9px;background:#fff;border:1px solid #d9e3e7;border-radius:10px;box-shadow:0 1px 3px #1b343508}
+.portfolio .sectionhead{margin-bottom:8px;padding:0 7px 12px;border-bottom:1px solid #e5ebee}
+.portfolio .sectionhead h3{font-size:13px;letter-spacing:.02em;color:#52636d}
+#contractorCount{min-width:25px;padding:2px 7px;text-align:center;background:#edf2f4;color:#52636d;font-size:11px}
+.contractor-item{margin-bottom:3px}
+.contractor-button,.contract-button{min-width:0;transition:background-color .15s ease,color .15s ease}
+.contractor-button{align-items:baseline;padding:10px 9px;border-radius:8px;font-size:13px;font-weight:600}
+.contractor-button span{min-width:0;overflow-wrap:anywhere}
+.contractor-button small{flex:none;white-space:nowrap;color:#7a8991;font-size:10px;font-weight:500}
+.contractor-button.active{background:#eef3f5;box-shadow:inset 3px 0 #75a8a3;color:#244650}
+.contract-button{width:calc(100% - 12px);margin:0 0 3px 12px;padding:7px 8px 8px 12px;border-left:1px solid #d8e3e7;border-radius:0 7px 7px 0;font-size:11px;line-height:1.35}
+.contract-button small{margin-top:2px;line-height:1.35}
+.contract-button.active{background:#f1f5f6;border-left:2px solid #75a8a3;color:#244650}
+.contractor-button:hover,.contract-button:hover{background:#edf2f4}
+.side-note{margin-top:13px;padding:13px 7px 0;font-size:11px;line-height:1.45;color:#788790}
+.guide-menu-button{margin-top:7px;padding:9px 8px;border:0;background:transparent;color:#315e6a;font-size:12px;font-weight:600}
+.guide-menu-button:hover{background:#edf2f4}
+.admin-side{border-top-color:#e5ebee}.portfolio .admin-side{background:transparent}
+@media(max-width:760px){.portfolio{margin-left:7px;padding:9px}.contractor-panel{padding:10px 6px 7px}.portfolio .sectionhead{padding:0 5px 10px}.contractor-button{display:block}.contractor-button small{display:block;margin-top:2px}.contract-button{margin-left:7px;width:calc(100% - 7px);padding-left:9px}}
+@media(max-width:560px){.portfolio{position:static;margin:10px 10px 0;height:auto;max-height:none}.portfolio .admin-side{background:#f8fafb}}
 /* Large work estimates remain legible on laptop and tablet viewports. */
 .kq-card{min-height:0;padding:12px 14px}
 .kq-tablewrap{height:min(76dvh,850px);min-height:520px;max-height:none;overflow:auto}
@@ -113,6 +135,5 @@ th,th:first-child{background:#eaf0f2;color:#24444d}tr.total td,.model-table .tre
 .period-table tr.table-section td,.period-table tr.summary-toggle:hover td{background:#eef3f5;color:#24444d}
 .settings-panel>summary,.settings-sub>summary,.cost-group summary{background:#f3f6f7;color:var(--navy)}
 .factor-drill>summary,.factor-other td{background:#f4f7f8}
-.portfolio .admin-side{background:#f3f5f6}
 /* КФО has the same heading row as the other expandable articles. */
 .model-table tr[data-tree-key="model-top-works"] td,.portfolio-model-table tr[data-tree-key="portfolio-works"] td,.model-table tr[data-tree-key="model-top-works"] td:first-child,.portfolio-model-table tr[data-tree-key="portfolio-works"] td:first-child,.period-table tr[data-tree-key="model-top-works"] .metric-col{background:#fff;color:var(--text);font-weight:650;border-top:0}
