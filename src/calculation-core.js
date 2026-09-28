@@ -97,9 +97,8 @@ function calculateModel(v,costDefs){
  const calculatedRevenue=d.physicalVolume.map((quantity,m)=>v.revenueBasis==='ksg'&&Array.isArray(d.ksgRevenue)?number(d.ksgRevenue[m]):v.workItems?.length?workRevenue[m]:quantity&&d.boqRate[m]?quantity*d.boqRate[m]:d.revenue[m]);
  const lastConfirmed=flags=>Array.isArray(flags)?flags.reduce((last,flag,m)=>flag?m+1:last,0):0,forecastFrom=Math.min(12,Math.max(0,v.closedThroughManual===true?Number(v.actualThroughMonth)||0:Math.max(Number(v.actualThroughMonth)||0,lastConfirmed(v.primaryMonthsWithDocuments),lastConfirmed(v.paymentActualMonths))));
  const accepted=Array.from({length:12},(_,m)=>number(m<forecastFrom?d.primaryExecuted?.[m]:d.ks2Accepted?.[m]));
- // KSG execution forecasts KS-2; source-backed work income is recognized on acceptance.
- const recognizedWork=v.revenueBasis==='ksg'&&v.cashFlowBasis==='source_model'&&Array.isArray(d.ks2Accepted)?accepted:calculatedRevenue;
- const revenue=recognizedWork.map((x,m)=>x+number(d.otherRevenue?.[m]));
+ // Work income follows the staged KSG execution; KS-2 documents it on a later schedule.
+ const revenue=calculatedRevenue.map((x,m)=>x+number(d.otherRevenue?.[m]));
  const payrollAt=(k,people,m)=>!params[k].enabled?0:params[k].method==='manual'?(v.manualCosts[k]?.[m]??p(k)):params[k].method==='driver'?number(d[params[k].rateBasis]?.[m])*p(k):params[k].method==='fixed'?p(k):people*p(k);
  const categories=(group,m)=>Array.isArray(v.personnelCategories?.[group])?v.personnelCategories[group].map(c=>({people:number(c.months?.[m]),wage:rateInContractCurrency(c.rate,c.currency||v.currency,v.currency,v.fxRate),insurance:number(c.insurance)})):null;
  const categoryPayroll=(group,m)=>sum((categories(group,m)||[]).map(c=>c.people*c.wage));
