@@ -704,7 +704,7 @@ function buildBankActuals(book,identity,constructionContract,year,currency,{befo
   if(String(line[h.cols.currency]||'').trim().toUpperCase()!==currency)throw Error('Валюта платежа расходится с валютой договора.');
   const date=sourceDate(line[h.cols.date]);if(beforeYear!==null?date.getUTCFullYear()>=beforeYear:date.getUTCFullYear()!==year)continue;
   const gross=numeric(line[h.cols.gross],'Платежи: сумма с НДС'),net=numeric(line[h.cols.net],'Платежи: сумма без НДС'),m=date.getUTCMonth();
-  if(gross<0||net<0||gross+0.01<net)throw Error('В реестре платежей некорректная сумма или НДС.');
+  if(gross*net<0||Math.abs(gross)+0.01<Math.abs(net))throw Error('В реестре платежей некорректная сумма или НДС.');
   if(type===norm('Аванс')){advances[m]+=net;advanceVat[m]+=gross-net;if(!sameCounterparty)advanceCounterparties.add(String(line[h.cols.contractor]).trim());}else if(type===norm('Оплата по факту')){payments[m]+=net;paymentVat[m]+=gross-net;}else continue;
   months[m]=true;count++;
  }
