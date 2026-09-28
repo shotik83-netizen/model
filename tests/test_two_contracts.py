@@ -10,7 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 from compare_excel_app import load_version, normalized
 
-model = ROOT / 'data/contractors/c1/models/model-2026-09-22.xlsx'
+config = json.loads((ROOT / 'config/config.json').read_text(encoding='utf-8'))
+model = ROOT / next(c['fileUrl'] for c in config['contractors'] if c['id'] == 'c1')
 original, pilot = load_version(model, 'd_pilot_4700134128', 'v_pilot_2026')
 scenario, second = load_version(model, 'd_scenario_b_4700134128', 'v_scenario_b_2026')
 _, second_next = load_version(model, 'd_scenario_b_4700134128', 'v_scenario_b_2027')
