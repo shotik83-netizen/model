@@ -23,15 +23,14 @@ assert.match(html,/Средняя ставка прямого ФОТ/);
 assert.match(html,/Прочие доходы/);
 assert.match(html,/Корректировка выполнения к оценке BOQ\/КСГ/);
 assert.match(html,/Корректировка к детализации прямых расходов/);
-assert.match(html,/<th>Фактор объёма<\/th><th>Фактор цены<\/th><th>Прочее<\/th>/);
+assert.match(html,/<th>Фактор объёма<\/th><th>Фактор цены<\/th>/);
 assert.doesNotMatch(html,/class="factor-reason"/);
 for(const row of html.matchAll(/<tr class="factor-(?:line|total|group) level-\d+">(.*?)<\/tr>/g)){
  const cells=[...row[1].matchAll(/<td[^>]*>(.*?)<\/td>/g)].map(x=>x[1].replace(/<[^>]*>/g,''));
- assert.equal(cells.length,7);
- if(cells[4]==='—'&&cells[5]==='—'&&cells[6]==='—')continue;
+ assert.equal(cells.length,6);
+ if(cells[4]==='—'&&cells[5]==='—')continue;
  const parse=x=>x==='—'?0:Number(x.replace(/\s/g,'').replace(',','.'));
- assert.ok(Math.abs(parse(cells[3])-parse(cells[4])-parse(cells[5])-parse(cells[6]))<1e-6,cells.join(' | '));
- assert.equal(parse(cells[6]),0,'unmeasured variance belongs to price rather than other');
+ assert.ok(Math.abs(parse(cells[3])-parse(cells[4])-parse(cells[5]))<1e-6,cells.join(' | '));
 }
 assert.match(html,/Косвенные/);
 assert.match(html,/Финансовый результат/);
