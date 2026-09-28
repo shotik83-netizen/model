@@ -131,7 +131,8 @@ th,th:first-child{background:#eaf0f2;color:#24444d}tr.total td,.model-table .tre
 /* Fit KQ columns to the available width, while preserving their readable minimums. */
 .kq-card .kq-table{width:100%;min-width:100%;table-layout:auto;font-size:12px}
 .kq-card .kq-table th,.kq-card .kq-table td{width:auto;padding:7px 8px;line-height:1.3}
-.kq-card .kq-table th:nth-child(1){min-width:72px}.kq-card .kq-table th:nth-child(2),.kq-card .kq-table td:nth-child(2){min-width:240px;max-width:340px}
+.kq-card .kq-table th:first-child,.kq-card .kq-table td:first-child{width:88px;min-width:88px;max-width:88px;white-space:nowrap;text-align:left}
+.kq-card .kq-table th:nth-child(2),.kq-card .kq-table td:nth-child(2){min-width:240px;max-width:340px}
 .kq-card .kq-table th:nth-child(3),.kq-card .kq-table th:nth-child(4),.kq-card .kq-table th:nth-child(5){min-width:86px}
 .kq-card .kq-table th:nth-child(6),.kq-card .kq-table th:nth-child(7){min-width:94px}
 .kq-card .kq-table th:nth-child(8){min-width:155px}.kq-card .kq-table th:nth-child(9){min-width:100px}
