@@ -137,6 +137,9 @@ function calculateModel(v,costDefs){
  const operatingPayments=aggregate(payments),directPayments=aggregate(payments,'direct'),indirectPayments=aggregate(payments,'indirect');
  const receipts=d.payments.map(number),advances=d.advances.map(number),factoring=d.factoring.map(number),offsets=d.advanceOffset.map(number),retention=Array.from({length:12},(_,m)=>number(d.primaryGuaranteeHold?.[m]));
  const deductions=Array.from({length:12},(_,m)=>number(d.primaryDeductions?.[m]));
+ const openingAdvance=number(v.openingAdvance),openingGuarantee=number(v.openingGuarantee);
+ const releaseMonth=number(v.guaranteeReleaseMonth);
+ if(releaseMonth&&(!Number.isInteger(releaseMonth)||releaseMonth<1||releaseMonth>12))throw Error('Месяц выплаты ГУ должен быть от 1 до 12.');
  if(sourceCash&&v.revenueBasis==='ksg'&&Array.isArray(d.ks2Accepted)){
   const rate=v.forecastGuaranteeRatePercent==null?5:number(v.forecastGuaranteeRatePercent);
   if(rate<0||rate>100)throw Error('Удержание ГУ в прогнозе должно быть от 0 до 100%.');
@@ -148,23 +151,35 @@ function calculateModel(v,costDefs){
     // to that month's newly calculated receipts or to the advance balance.
     if(v.closedThroughManual===true){factoring[m]=0;advances[m]=0;deductions[m]=0;}
     retention[m]=accepted[m]*rate/100;
-    const advanceBalance=Math.max(0,sum(advances.slice(0,m))-sum(offsets.slice(0,m)));
+    const advanceBalance=Math.max(0,openingAdvance+sum(advances.slice(0,m))-sum(offsets.slice(0,m)));
     offsets[m]=contractAccepted>factAccepted&&advanceBalance>0?Math.min(advanceBalance,accepted[m]*advanceBalance/(contractAccepted-sum(accepted.slice(0,m)))):0;
     receipts[m]=Math.max(0,debt+accepted[m]-retention[m]-deductions[m]-offsets[m]-factoring[m]);
    }
    debt+=accepted[m]-retention[m]-deductions[m]-offsets[m]-receipts[m]-factoring[m];
   }
  }
+ let held=openingGuarantee,advance=openingAdvance;
+ const guaranteeRelease=Array(12).fill(0),guaranteeBalance=Array(12).fill(0),advanceBalance=Array(12).fill(0);
+ for(let m=0;m<12;m++){
+  held+=retention[m];
+  const documented=number(d.guaranteePayments?.[m]);
+  if(documented<0||documented>held+1e-6)throw Error('Выплата ГУ превышает удержанный остаток.');
+  guaranteeRelease[m]=documented;
+  held-=documented;
+  if(releaseMonth===m+1&&m>=forecastFrom){guaranteeRelease[m]+=held;held=0;}
+  guaranteeBalance[m]=held;
+  advance+=advances[m]-offsets[m];advanceBalance[m]=advance;
+ }
  const documentedVat=(amount,series,m)=>m<forecastFrom&&v.paymentActualMonths?.[m]&&Array.isArray(d[series])&&Number.isFinite(Number(d[series][m]))?Number(d[series][m]):amount/(1+vat)*vat;
- const outputVat=receipts.map((x,m)=>documentedVat(x,'paymentVat',m)),advanceVat=advances.map((x,m)=>documentedVat(x,'advanceVat',m)),offsetVat=offsets.map(x=>-x/(1+vat)*vat),vatPay=outputVat.map((x,m)=>sourceCash?number(v.manualVatPayments?.[m]):Math.max(0,x+advanceVat[m]+offsetVat[m]-inputVat[m]));
+ const outputVat=receipts.map((x,m)=>documentedVat(x+guaranteeRelease[m],'paymentVat',m)),advanceVat=advances.map((x,m)=>documentedVat(x,'advanceVat',m)),offsetVat=offsets.map(x=>-x/(1+vat)*vat),vatPay=outputVat.map((x,m)=>sourceCash?number(v.manualVatPayments?.[m]):Math.max(0,x+advanceVat[m]+offsetVat[m]-inputVat[m]));
  // The source Excel cash-flow row 140 includes payments, factoring and advances;
  // signed advance offsets reduce receivables (row 86), not bank receipts.
- const inflow=receipts.map((x,m)=>x+advances[m]+factoring[m]-(sourceCash?0:offsets[m])),ncf=inflow.map((x,m)=>x-operatingPayments[m]-vatPay[m]);let acc=number(v.openingCash);const cumulative=ncf.map(x=>acc+=x);
+ const inflow=receipts.map((x,m)=>x+advances[m]+factoring[m]+guaranteeRelease[m]),ncf=inflow.map((x,m)=>x-operatingPayments[m]-vatPay[m]);let acc=number(v.openingCash);const cumulative=ncf.map(x=>acc+=x);
  // The bridge makes the difference between accrual and cash explicit. Do not
  // manufacture a bank receipt merely to make cash flow equal the P&L result.
  const cashBridge={revenue:sum(revenue),cashReceipts:sum(inflow),accrualGap:sum(inflow)-sum(revenue),accruedCosts:sum(costs),cashCosts:sum(operatingPayments),costTiming:sum(costs)-sum(operatingPayments),taxCash:sum(vatPay),openingCash:number(v.openingCash)};
  let balance=number(v.openingReceivable);const receivable=accepted.map((x,m)=>balance+=x-retention[m]-deductions[m]-offsets[m]-receipts[m]-factoring[m]);
- return{rows,materialCostsByKind,revenue,scheduledRevenue:calculatedRevenue,direct,indirect,costs,profit,payments,directPayments,indirectPayments,outputVat,advanceVat,offsetVat,inputVat,vatPay,operatingPayments,inflow,ncf,cumulative,cashBridge,openingCash:number(v.openingCash),deferred,accepted,receipts,advances,factoring,offsets,retention,deductions,receivable};
+ return{rows,materialCostsByKind,revenue,scheduledRevenue:calculatedRevenue,direct,indirect,costs,profit,payments,directPayments,indirectPayments,outputVat,advanceVat,offsetVat,inputVat,vatPay,operatingPayments,inflow,ncf,cumulative,cashBridge,openingCash:number(v.openingCash),openingAdvance,openingGuarantee,deferred,accepted,receipts,advances,advanceBalance,factoring,offsets,retention,guaranteeRelease,guaranteeBalance,deductions,receivable};
 }
 return{number,sum,toRub,fromRub,rateInContractCurrency,recognizeKsgSchedule,ksgAcceptanceSchedule,factorBridge,aggregateFactors,topWorkFactors,compareWorkItems,residualFactor,aggregateContractor,calculateModel};
 })();
