@@ -944,20 +944,39 @@ function longitudinalTable(kind){const periods=periodVersions(),currency=periods
  return `<tr class="${classes}" ${def.group?kind==='summary'?`data-summary-toggle="${esc(def.group)}" tabindex="0"`:`data-tree-key="${esc(def.group)}" tabindex="0"`:''} ${kind==='model'&&def.parent?`data-tree-parent="${esc(def.parent)}"`:''}><td class="metric-col" style="padding-left:${12+(def.level||((def.parent==='direct'||def.parent==='indirect')?2:def.parent?1:0))*15}px">${esc(def.label)}</td>${cell(overall,raw,'all-total')}${factCell}${specs.map(column).join('')}</tr>`;}).join('');return `<table class="period-table ${kind==='model'?'model-table':''}"><thead><tr>${titles}</tr><tr class="period-status"><th>Тип периода</th><th>Факт + прогноз</th><th>Факт</th>${specs.map(spec=>`<th>${spec.kind==='previous'?'Факт':spec.kind==='month'&&spec.months[0]<factThrough(periods.find(({v})=>v.year===spec.year).v)?'Факт':'Прогноз'}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table>`;
 }
 function renderModelComments(){
- const v=version(),meta=v.workSourceMeta||{},periods=periodVersions(),coverage=resourceCoveragePreview(),messages=[],add=message=>{if(message&&!messages.includes(message))messages.push(message);};
- if(v.dataMode==='source_partial')add('Расчёт предварительный: сведения из источников требуют проверки.');
- for(const {v:year} of periods){for(const warning of [...(year.workSourceMeta?.blockers||[]),...(year.workSourceMeta?.warnings||[])])add(warning);}
- if(meta.error)add('Не удалось обновить источники: '+meta.error+'. Проверьте ранее загруженные показатели.');
- if(meta.ignoredRows)add(`Исключено без сопоставления KQ-2: ${meta.ignoredRows} строк КСГ.`);
- if(meta.unmatchedRows)add(`Без оценки KQ-2: ${meta.unmatchedRows} строк КСГ.`);
- if(coverage?.issues.length)add(`Ошибка графиков ресурсов: ${coverage.issues.join(' ')} Расходы и CF рассчитаны по имеющимся данным.`);
- if(meta.advanceCounterparties?.length)add(`Авансы сопоставлены по номеру договора, проекту и назначению платежа; контрагент в реестре отличается: ${meta.advanceCounterparties.join(', ')}. Проверьте основание зачёта.`);
- const reconciliation=periods.map(({v:year})=>year.workSourceMeta?.acceptanceReconciliation).find(Boolean);
- if(reconciliation){const finalAccepted=sum(periods.flatMap(({r})=>r.accepted));add(`Сверка доходов и КС-2 за весь проект: выполнение по КСГ ${fmt(reconciliation.execution)}, фактические акты ${fmt(reconciliation.documented)}, исходный прогноз актов ${fmt(reconciliation.originalForecast)}; разница ${fmt(reconciliation.unaccepted)} ${unitName()}.${reconciliation.allocated>0?' Разница распределена пропорционально прогнозным КС-2 с сохранением сроков актирования; фактические акты сохранены.':''} Итог КС-2 после расчёта ${fmt(finalAccepted)}.`);}
- if(meta.historicalCostSource)add(`Факт расходов перенесён из ${meta.historicalCostSource}; первичные документы по расходам требуют сверки.`);
- const r=state.results,peak=Math.max(...r.advanceBalance);if(peak>0&&sum(r.advances)+r.openingAdvance>0){const m=r.advanceBalance.indexOf(peak);add(`Незачтённый аванс, максимум за ${MONTHS[m]} ${v.year}: остаток на начало ${fmt(r.openingAdvance)} + получено ${fmt(sum(r.advances.slice(0,m+1)))} − зачтено ${fmt(sum(r.offsets.slice(0,m+1)))} = ${fmt(peak)} ${unitName()}.`);}
- if(r.guaranteeBalance.at(-1)>0.01)add(`На конец ${v.year} года удержано ГУ ${fmt(r.guaranteeBalance.at(-1))} ${unitName()}; выплата следует после последней приёмки КС-2.`);
- add(`Финансовый результат и CF отличаются из-за сроков поступлений и выплат и платежей НДС. За ${v.year} год: финансовый результат ${fmt(sum(r.profit))}, CF ${fmt(sum(r.ncf))} ${unitName()}.`);
+ const periods=periodVersions(),coverage=resourceCoveragePreview(),messages=[],seen=new Set();
+ const add=(key,message)=>{if(message&&!seen.has(key)){seen.add(key);messages.push(message);}};
+ const significant=(n,year)=>Math.abs(displayAmount(n,year)/state.unit)>=0.05;
+ for(const {v:year,r} of periods){
+  const meta=year.workSourceMeta||{},label=String(year.year),unit=unitName(displayCode(year)),value=n=>fmt(n,year),note=(key,message)=>add(label+':'+key,message);
+  if(year.dataMode==='source_partial')note('mode',`${label}: расчёт предварительный; проверьте исходные документы и строки ниже.`);
+  for(const warning of [...(meta.blockers||[]),...(meta.warnings||[])])note('source:'+warning,`${label}, источники: ${warning}`);
+  if(meta.error)note('error',`${label}, источники: обновление не удалось (${meta.error}); сверяйте расчёт с последним успешно загруженным набором.`);
+  if(meta.ignoredRows)note('ignored',`${label}, КСГ: ${meta.ignoredRows} строк исключено без сопоставления KQ-2; проверьте mapping и влияние на доходы.`);
+  if(meta.unmatchedRows)note('unmatched',`${label}, КСГ: ${meta.unmatchedRows} строк без оценки KQ-2; назначьте расценки перед подтверждением доходов.`);
+  if(year.currency!=='RUB'&&fxOf(year)<=0)note('fx',`${label}, валюта: курс ${year.currency}/RUB не задан; рублёвые итоги и сравнение версий требуют курса.`);
+  if(meta.historicalCostSource)note('historical',`${label}, расходы: факт перенесён из ${meta.historicalCostSource}; сверьте статьи с первичными документами.`);
+  if(meta.advanceCounterparties?.length)note('counterparty',`${label}, авансы: контрагент в реестре отличается (${meta.advanceCounterparties.join(', ')}); подтвердите основание зачёта.`);
+  const work=sum(r.scheduledRevenue||[]),other=sum(year.drivers.otherRevenue||[]),income=sum(r.revenue),accepted=sum(r.accepted||[]);
+  if(year.revenueBasis==='ksg'&&significant(income-work-other,year))note('income',`${label}, доходы: ${value(income)} ${unit} = выполнение КСГ ${value(work)} + прочие доходы ${value(other)} + корректировка ${value(income-work-other)}; проверьте источник корректировки.`);
+  if(year.revenueBasis==='ksg'&&significant(work-accepted,year))note('ks2',`${label}, выполнение и КС-2: по КСГ ${value(work)}, принято по КС-2 ${value(accepted)}, разница ${value(work-accepted)} ${unit}. Проверьте сроки актирования, документный факт и прогноз следующих периодов; разница за год сама по себе не означает потерю дохода.`);
+  const direct=sum(r.direct),indirect=sum(r.indirect),cost=sum(r.costs);
+  if(significant(cost-direct-indirect,year))note('cost',`${label}, расходы: всего ${value(cost)}, прямые ${value(direct)}, косвенные ${value(indirect)}, неразнесённая сумма ${value(cost-direct-indirect)} ${unit}; определите статью затрат.`);
+  for(const [group,total] of [['direct',direct],['indirect',indirect]]){
+   const detailed=sum(COST_DEFS.filter(x=>x[0]===group).map(x=>sum(r.rows[x[2]]||[])));
+   if(significant(total-detailed,year))note('cost:'+group,`${label}, ${group==='direct'?'прямые':'косвенные'} расходы: расхождение с детализацией ${value(total-detailed)} ${unit}; определите статью затрат.`);
+  }
+  const endAdvance=r.advanceBalance?.at(-1)||0,endGuarantee=r.guaranteeBalance?.at(-1)||0;
+  if(significant(endAdvance,year))note('advance',`${label}, аванс: незачтённый остаток на конец года ${value(endAdvance)} ${unit}; сверьте начальный остаток, поступления и зачёты.`);
+  if(significant(endGuarantee,year))note('guarantee',`${label}, ГУ: удержанный остаток на конец года ${value(endGuarantee)} ${unit}; проверьте срок выплаты после приёмки КС-2.`);
+  const bridge=r.cashBridge,profit=sum(r.profit),flow=sum(r.ncf);
+  if(bridge&&significant(flow-profit,year))note('cash',`${label}, финансовый результат и CF: результат ${value(profit)}, CF за период ${value(flow)}, отклонение ${value(flow-profit)} ${unit}. Состав: поступления минус доходы ${value(bridge.accrualGap)}, начисленные расходы минус выплаты ${value(bridge.costTiming)}, выплата НДС ${value(-bridge.taxCash)}; сверьте сроки платежей и источники факта.`);
+  const low=Math.min(...(r.cumulative||[0]));
+  if(significant(low,year)&&low<0)note('funding',`${label}, CF накопительно: минимум ${value(low)} ${unit}; проверьте потребность в финансировании и календарь поступлений и выплат.`);
+ }
+ if(coverage?.issues.length)add('resources',`Графики персонала и техники: ${coverage.issues.join(' ')} Расходы, результат и CF рассчитаны по имеющимся данным; продлите графики до конца работ.`);
+ const reconciliation=periods.map(({v:year})=>({year,check:year.workSourceMeta?.acceptanceReconciliation})).find(x=>x.check);
+ if(reconciliation){const {year,check}=reconciliation,unit=unitName(displayCode(year)),value=n=>fmt(n,year),finalAccepted=sum(periods.flatMap(({r})=>r.accepted));add('project:acceptance',`Проект, сверка КС-2: выполнение по КСГ ${value(check.execution)}, фактические акты ${value(check.documented)}, исходный прогноз ${value(check.originalForecast)}, остаток ${value(check.unaccepted)} ${unit}.${check.allocated>0?' Остаток распределён пропорционально прогнозному закрытию без изменения фактических актов.':''} Итог КС-2 после расчёта ${value(finalAccepted)}; проверьте актирование до конца проекта.`);}
  const html=`<div class="note model-comment-list"><h3>Комментарии к модели</h3><ol>${messages.map(message=>`<li>${esc(message)}</li>`).join('')}</ol></div>`;
  $('summaryComments').innerHTML=html;$('detailComments').innerHTML=html;
 }
