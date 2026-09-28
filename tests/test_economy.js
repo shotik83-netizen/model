@@ -64,6 +64,16 @@ close(settled.guaranteeRelease[11],15,'opening and new guarantee are paid on pro
 close(settled.inflow[7]+settled.inflow[11]+30,110,'project receipts include earlier advance and released guarantee once');
 close(settled.advanceBalance[11],0,'advance is cleared after offset');
 close(settled.guaranteeBalance[11],0,'guarantee is cleared after final payment');
+const projectDrivers={...provisionalDrivers,ks2Accepted:series(),advances:series(),advanceOffset:series(),payments:series(),factoring:series()};
+projectDrivers.advances[0]=100;projectDrivers.ks2Accepted[1]=100;
+const project2026=core.calculateModel({...cutoffVersion,drivers:projectDrivers,actualThroughMonth:0,closedThroughManual:false,paymentActualMonths:series().map(Boolean),futureKs2Accepted:100},costDefs);
+close(project2026.offsets[1],50,'project-wide forecast offsets advance in proportion to remaining KS-2');
+close(project2026.advanceBalance[11],50,'unoffset advance carries into the next year');
+const project2027=core.calculateModel({...cutoffVersion,year:2027,drivers:{...projectDrivers,advances:series(),ks2Accepted:[100,...Array(11).fill(0)]},actualThroughMonth:0,closedThroughManual:false,paymentActualMonths:series().map(Boolean),openingAdvance:50,futureKs2Accepted:0},costDefs);
+close(project2027.offsets[0],50,'last KS-2 offsets the carried advance');
+close(project2027.advanceBalance[11],0,'project-wide offset clears at the end of the model');
+const manualOffset=core.calculateModel({...cutoffVersion,drivers:{...projectDrivers,advanceOffset:[0,20,...Array(10).fill(0)]},actualThroughMonth:0,closedThroughManual:false,paymentActualMonths:series().map(Boolean),advanceOffsetMethod:'manual',futureKs2Accepted:100},costDefs);
+close(manualOffset.offsets[1],20,'manual monthly offset remains selectable');
 const automaticResult=core.calculateModel({...cutoffVersion,closedThroughManual:false},costDefs);
 close(automaticResult.revenue[7],70,'documentary cutoff does not alter executed work income');
 close(automaticResult.accepted[7],20,'automatic mode uses the documented month');

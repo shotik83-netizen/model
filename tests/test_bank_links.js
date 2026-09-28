@@ -20,4 +20,22 @@ assert.equal(ctx.count(book,identity,'4700134128','USD',[120,120]),2,'two docume
 assert.equal(ctx.count(book,identity,'4700134128','RUB',[120]),1,'currency selects only matching payment');
 assert.equal(ctx.count(book,{...identity,contractNumber:'ERP-2'},'4700134128','USD',[120]),1,'ERP alias is required');
 assert.equal(ctx.count(book,identity,'wrong','USD',[120]),0,'construction contract is required');
+const bankStart=source.indexOf('function buildBankActuals('),bankEnd=source.indexOf('function buildFactoringActuals(',bankStart);
+const bankCtx=vm.createContext({
+ rowWithHeaders:()=>({row:0,cols:{date:1,contractor:3,contract:4,currency:5,gross:6,net:7,purpose:12,type:14,project:16}}),
+ sourceProfile:()=>({}),norm:x=>String(x??'').toLowerCase().replace(/[\s\p{P}]/gu,''),
+ sourceDate:x=>x instanceof Date?x:new Date(x),numeric:x=>Number(x)
+});
+vm.runInContext(source.slice(bankStart,bankEnd)+';this.buildBankActuals=buildBankActuals;',bankCtx);
+const bankRow=(party,type,contract='ERP-1',purpose='Оплата по договору 4700134128')=>{
+ const x=Array(17).fill('');x[1]=new Date('2026-03-03T00:00:00Z');x[3]=party;x[4]=contract;x[5]='USD';x[6]=120;x[7]=100;x[12]=purpose;x[14]=type;x[16]='Проект';return x;
+};
+const olderAdvance=bankRow('Другой подрядчик','Аванс');olderAdvance[1]=new Date('2025-12-03T00:00:00Z');
+const bank={sheets:[{name:'Платежи',rows:[[],bankRow('Другой подрядчик','Аванс'),bankRow('Другой подрядчик','Оплата по факту'),bankRow('ООО Подрядчик','Оплата по факту'),bankRow('Другой подрядчик','Аванс','Другой ERP'),olderAdvance]}]};
+const actual=bankCtx.buildBankActuals(bank,{contractor:'ООО Подрядчик',contractNumber:'ERP-1',project:'Проект'},'4700134128',2026,'USD');
+assert.equal(actual.advances[2],100,'advance with exact contract, project and purpose is included even when payer differs');
+assert.equal(actual.payments[2],100,'ordinary payment still requires the named counterparty');
+assert.deepEqual([...actual.advanceCounterparties],['Другой подрядчик'],'counterparty difference is disclosed');
+const opening=bankCtx.buildBankActuals(bank,{contractor:'ООО Подрядчик',contractNumber:'ERP-1',project:'Проект'},'4700134128',2026,'USD',{beforeYear:2026});
+assert.equal(opening.advances[11],100,'advance from the preceding year is available for opening balance');
 console.log('BANK DOCUMENT LINK TESTS: OK');
