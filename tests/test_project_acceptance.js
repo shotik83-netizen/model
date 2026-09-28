@@ -33,6 +33,19 @@ assert.equal(current.drivers.ks2Accepted[8],15+29*15/43,'remaining acceptance fo
 assert.equal(future.drivers.ks2Accepted[1],28+29*28/43,'remaining acceptance follows the forecast KS-2 in 2027');
 assert.equal(future.drivers.ks2Accepted[0],0,'execution month does not receive a premature KS-2');
 assert.ok(Math.abs(check.documented+current.drivers.ks2Accepted[8]+future.drivers.ks2Accepted[1]-check.execution)<1e-9);
+const reconciled=[current.drivers.ks2Accepted[8],future.drivers.ks2Accepted[1]];
+context.reconcile(scope,current);
+assert.ok(Math.abs(current.drivers.ks2Accepted[8]-reconciled[0])<1e-9,'reconciliation is repeatable');
+assert.ok(Math.abs(future.drivers.ks2Accepted[1]-reconciled[1])<1e-9,'future allocation is repeatable');
+current.drivers.ks2Accepted[7]=5;
+current.drivers.primaryExecuted[7]=3;
+current.actualThroughMonth=7;
+context.reconcile(scope,current,6);
+assert.ok(Math.abs(current.drivers.primaryExecuted[7]-3)<1e-9,'documented month remains intact');
+assert.ok(Math.abs(8+20+current.drivers.ks2Accepted[7]+current.drivers.ks2Accepted[8]+future.drivers.ks2Accepted[1]-100)<1e-9,'project acceptance balances after closing boundary changes');
+current.actualThroughMonth=8;
+context.reconcile(scope,current,7);
+assert.ok(Math.abs(8+20+3+current.drivers.ks2Accepted[8]+future.drivers.ks2Accepted[1]-100)<1e-9,'project acceptance balances after returning to documents');
 
 const noForecast={id:'closed',year:2026,revenueBasis:'ksg',actualThroughMonth:12,workSourceMeta:{blockers:[]},drivers:{ksgRevenue:series(),ks2Accepted:series(),primaryExecuted:series()}};
 noForecast.drivers.ksgRevenue[0]=10;noForecast.drivers.primaryExecuted[1]=8;
