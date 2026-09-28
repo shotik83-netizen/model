@@ -55,8 +55,8 @@ assert.equal(wage.price,240,'rate change at current hours');
 assert.equal(wage.volume+wage.price+wage.remainder,440,'salary expense bridge closes');
 const missingHours=CalculationCore.effectiveCostBridge({baseCost:100,currentCost:240,baseQuantity:0,currentQuantity:20});
 assert.equal(missingHours.volume,0,'no invented base hourly wage');
-assert.equal(missingHours.price,0,'no invented rate factor without hours');
-assert.equal(missingHours.remainder,140,'unexplained expense is visible');
+assert.equal(missingHours.price,140,'without comparable hours assign the expense variance to price');
+assert.equal(missingHours.remainder,0,'the bridge closes without an unexplained remainder');
 
 const boqRecords=[
  {kqCode:'KQ.01',kqName:'Земляные работы',quantity:10,laborHours:20,machineHours:3,cost:1000,materialsCost:70},

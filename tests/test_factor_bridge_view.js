@@ -28,6 +28,7 @@ for(const row of html.matchAll(/<tr class="factor-(?:line|total|group) level-\d+
  if(cells[4]==='—'&&cells[5]==='—'&&cells[6]==='—')continue;
  const parse=x=>x==='—'?0:Number(x.replace(/\s/g,'').replace(',','.'));
  assert.ok(Math.abs(parse(cells[3])-parse(cells[4])-parse(cells[5])-parse(cells[6]))<=.21,cells.join(' | '));
+ assert.equal(parse(cells[6]),0,'unmeasured variance belongs to price rather than other');
 }
 assert.match(html,/Косвенные/);
 assert.match(html,/Финансовый результат/);
