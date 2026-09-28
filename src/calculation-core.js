@@ -146,12 +146,15 @@ function calculateModel(v,costDefs){
  const receipts=d.payments.map(number),advances=d.advances.map(number),factoring=d.factoring.map(number),offsets=d.advanceOffset.map(number),retention=Array.from({length:12},(_,m)=>number(d.primaryGuaranteeHold?.[m]));
  const deductions=Array.from({length:12},(_,m)=>number(d.primaryDeductions?.[m]));
  const openingAdvance=number(v.openingAdvance),openingGuarantee=number(v.openingGuarantee);
+ const offsetMethod=v.advanceOffsetMethod||'proportional';
+ if(!['proportional','manual'].includes(offsetMethod))throw Error('Неизвестный способ зачёта аванса.');
+ const futureKs2Accepted=number(v.futureKs2Accepted);
+ if(futureKs2Accepted<0)throw Error('Остаток КС-2 будущих лет не может быть отрицательным.');
  const releaseMonth=number(v.guaranteeReleaseMonth);
  if(releaseMonth&&(!Number.isInteger(releaseMonth)||releaseMonth<1||releaseMonth>12))throw Error('Месяц выплаты ГУ должен быть от 1 до 12.');
  if(sourceCash&&v.revenueBasis==='ksg'&&Array.isArray(d.ks2Accepted)){
   const rate=v.forecastGuaranteeRatePercent==null?5:number(v.forecastGuaranteeRatePercent);
   if(rate<0||rate>100)throw Error('Удержание ГУ в прогнозе должно быть от 0 до 100%.');
-  const contractAccepted=sum(accepted),factAccepted=sum(accepted.slice(0,forecastFrom));
   let debt=number(v.openingReceivable);
   for(let m=0;m<12;m++){
    if(m>=forecastFrom){
@@ -159,8 +162,9 @@ function calculateModel(v,costDefs){
     // to that month's newly calculated receipts or to the advance balance.
     if(v.closedThroughManual===true){factoring[m]=0;advances[m]=0;deductions[m]=0;}
     retention[m]=accepted[m]*rate/100;
-    const advanceBalance=Math.max(0,openingAdvance+sum(advances.slice(0,m))-sum(offsets.slice(0,m)));
-    offsets[m]=contractAccepted>factAccepted&&advanceBalance>0?Math.min(advanceBalance,accepted[m]*advanceBalance/(contractAccepted-sum(accepted.slice(0,m)))):0;
+    const advanceBalance=Math.max(0,openingAdvance+sum(advances.slice(0,m+1))-sum(offsets.slice(0,m)));
+    const remainingKs2=sum(accepted.slice(m))+futureKs2Accepted;
+    offsets[m]=offsetMethod==='proportional'&&advanceBalance>0&&remainingKs2>0?Math.min(advanceBalance,Math.max(0,accepted[m]),Math.max(0,accepted[m])*advanceBalance/remainingKs2):number(d.advanceOffset?.[m]);
     receipts[m]=Math.max(0,debt+accepted[m]-retention[m]-deductions[m]-offsets[m]-factoring[m]);
    }
    debt+=accepted[m]-retention[m]-deductions[m]-offsets[m]-receipts[m]-factoring[m];
