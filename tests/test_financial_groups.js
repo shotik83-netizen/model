@@ -15,16 +15,20 @@ for(const basis of ['source_model','manual']){
  const html=context.makeModelTable(r);
  const row=(label)=>{const match=[...html.matchAll(/<tr ([^>]+)><td>([^<]+)<\/td>(.*?)<\/tr>/g)].find(x=>x[2]===label);assert.ok(match,label);return{attrs:match[1],value:Number(match[3].match(/data-value="([^"]+)"/)?.[1])};};
  assert.equal(row('Принято по КС-2').value,100);
- assert.equal(row('Зачёты').value,15);
+ assert.equal(row('Зачёты').value,-15);
  assert.equal(row('Зачёт авансов').value+row('Взаимозачёты').value,row('Зачёты').value);
  assert.match(row('Зачёт авансов').attrs,/data-tree-parent="model-offsets"/);
  assert.match(row('Взаимозачёты').attrs,/hidden/);
- assert.equal(row('ГУ').value,5);
+ assert.equal(row('ГУ').value,-5);
+ assert.equal(row('Удержание').value,-8);
+ assert.equal(row('Начисление к выплате').value,3);
  assert.equal(row('Удержание').value+row('Начисление к выплате').value,row('ГУ').value);
  assert.match(row('Начисление к выплате').attrs,/data-tree-parent="model-guarantee"/);
  assert.equal(row('Незачтённый аванс').value,7);
  assert.equal(row('Поступления').value,60);
  assert.equal(['Оплата КС','Факторинг','Аванс','Выплата ГУ'].reduce((n,label)=>n+row(label).value,0),row('Поступления').value);
  assert.equal((html.match(/<td>Выплата ГУ<\/td>/g)||[]).length,1);
+ assert.match(html,/<td>Выплаты подрядчика<\/td>/);
+ assert.doesNotMatch(html,/Выплаты подрядчика по статьям расходов/);
 }
 console.log('FINANCIAL GROUPS: OK');
