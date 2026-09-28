@@ -95,7 +95,11 @@ function calculateModel(v,costDefs){
  for(const x of costDefs)if(params[x[2]]?.enabled&&params[x[2]].method==='driver'&&(!Array.isArray(d[params[x[2]].rateBasis])||d[params[x[2]].rateBasis].length!==12))throw Error('Для статьи «'+x[1]+'» выберите помесячный показатель ставки.');
  const workRevenue=Array.from({length:12},(_,m)=>sum((v.workItems||[]).map(x=>number(x.volumes?.[m])*number(x.rate))));
  const calculatedRevenue=d.physicalVolume.map((quantity,m)=>v.revenueBasis==='ksg'&&Array.isArray(d.ksgRevenue)?number(d.ksgRevenue[m]):v.workItems?.length?workRevenue[m]:quantity&&d.boqRate[m]?quantity*d.boqRate[m]:d.revenue[m]);
- const revenue=calculatedRevenue.map((x,m)=>x+d.otherRevenue[m]);
+ const lastConfirmed=flags=>Array.isArray(flags)?flags.reduce((last,flag,m)=>flag?m+1:last,0):0,forecastFrom=Math.min(12,Math.max(0,v.closedThroughManual===true?Number(v.actualThroughMonth)||0:Math.max(Number(v.actualThroughMonth)||0,lastConfirmed(v.primaryMonthsWithDocuments),lastConfirmed(v.paymentActualMonths))));
+ const accepted=Array.from({length:12},(_,m)=>number(m<forecastFrom?d.primaryExecuted?.[m]:d.ks2Accepted?.[m]));
+ // KSG execution forecasts KS-2; source-backed work income is recognized on acceptance.
+ const recognizedWork=v.revenueBasis==='ksg'&&v.cashFlowBasis==='source_model'&&Array.isArray(d.ks2Accepted)?accepted:calculatedRevenue;
+ const revenue=recognizedWork.map((x,m)=>x+number(d.otherRevenue?.[m]));
  const payrollAt=(k,people,m)=>!params[k].enabled?0:params[k].method==='manual'?(v.manualCosts[k]?.[m]??p(k)):params[k].method==='driver'?number(d[params[k].rateBasis]?.[m])*p(k):params[k].method==='fixed'?p(k):people*p(k);
  const categories=(group,m)=>Array.isArray(v.personnelCategories?.[group])?v.personnelCategories[group].map(c=>({people:number(c.months?.[m]),wage:rateInContractCurrency(c.rate,c.currency||v.currency,v.currency,v.fxRate),insurance:number(c.insurance)})):null;
  const categoryPayroll=(group,m)=>sum((categories(group,m)||[]).map(c=>c.people*c.wage));
@@ -131,8 +135,6 @@ function calculateModel(v,costDefs){
  const direct=aggregate(rows,'direct'),indirect=aggregate(rows,'indirect'),costs=aggregate(rows),profit=revenue.map((x,m)=>x-costs[m]),sourceCash=v.cashFlowBasis==='source_model',payments={},vat=v.vatRate/100,inputVat=Array(12).fill(0);let deferred=0;
  for(const x of costDefs){const k=x[2],param=params[k];payments[k]=Array(12).fill(0);if(v.manualPayments[k]){payments[k]=v.manualPayments[k].slice();}else if(param.enabled&&param.cash){for(let m=0;m<12;m++){const amount=rows[k][m]*(sourceCash?1:param.vat?1+vat:1),to=m+(param.lag||0);if(to>11){deferred+=amount;continue;}payments[k][to]+=amount;}}if(param.vat&&!sourceCash)payments[k].forEach((amount,m)=>inputVat[m]+=amount/(1+vat)*vat);}
  const operatingPayments=aggregate(payments),directPayments=aggregate(payments,'direct'),indirectPayments=aggregate(payments,'indirect');
- const lastConfirmed=flags=>Array.isArray(flags)?flags.reduce((last,flag,m)=>flag?m+1:last,0):0,forecastFrom=Math.min(12,Math.max(0,v.closedThroughManual===true?Number(v.actualThroughMonth)||0:Math.max(Number(v.actualThroughMonth)||0,lastConfirmed(v.primaryMonthsWithDocuments),lastConfirmed(v.paymentActualMonths))));
- const accepted=Array.from({length:12},(_,m)=>number(m<forecastFrom?d.primaryExecuted?.[m]:d.ks2Accepted?.[m]));
  const receipts=d.payments.map(number),advances=d.advances.map(number),factoring=d.factoring.map(number),offsets=d.advanceOffset.map(number),retention=Array.from({length:12},(_,m)=>number(d.primaryGuaranteeHold?.[m]));
  const deductions=Array.from({length:12},(_,m)=>number(d.primaryDeductions?.[m]));
  if(sourceCash&&v.revenueBasis==='ksg'&&Array.isArray(d.ks2Accepted)){
@@ -162,7 +164,7 @@ function calculateModel(v,costDefs){
  // manufacture a bank receipt merely to make cash flow equal the P&L result.
  const cashBridge={revenue:sum(revenue),cashReceipts:sum(inflow),accrualGap:sum(inflow)-sum(revenue),accruedCosts:sum(costs),cashCosts:sum(operatingPayments),costTiming:sum(costs)-sum(operatingPayments),taxCash:sum(vatPay),openingCash:number(v.openingCash)};
  let balance=number(v.openingReceivable);const receivable=accepted.map((x,m)=>balance+=x-retention[m]-deductions[m]-offsets[m]-receipts[m]-factoring[m]);
- return{rows,materialCostsByKind,revenue,direct,indirect,costs,profit,payments,directPayments,indirectPayments,outputVat,advanceVat,offsetVat,inputVat,vatPay,operatingPayments,inflow,ncf,cumulative,cashBridge,openingCash:number(v.openingCash),deferred,accepted,receipts,advances,factoring,offsets,retention,deductions,receivable};
+ return{rows,materialCostsByKind,revenue,scheduledRevenue:calculatedRevenue,direct,indirect,costs,profit,payments,directPayments,indirectPayments,outputVat,advanceVat,offsetVat,inputVat,vatPay,operatingPayments,inflow,ncf,cumulative,cashBridge,openingCash:number(v.openingCash),deferred,accepted,receipts,advances,factoring,offsets,retention,deductions,receivable};
 }
 return{number,sum,toRub,fromRub,rateInContractCurrency,recognizeKsgSchedule,ksgAcceptanceSchedule,factorBridge,aggregateFactors,topWorkFactors,compareWorkItems,residualFactor,aggregateContractor,calculateModel};
 })();
