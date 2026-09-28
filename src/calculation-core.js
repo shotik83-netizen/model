@@ -73,7 +73,7 @@ function residualFactor({base=0,current=0,explained=0}={}){return number(current
 function effectiveCostBridge({baseCost=0,currentCost=0,baseQuantity=0,currentQuantity=0}={}){
  const q0=number(baseQuantity),q1=number(currentQuantity),c0=number(baseCost),c1=number(currentCost);
  const rate0=q0>0?c0/q0:null,rate1=q1>0?c1/q1:null;
- if(rate0===null||rate1===null)return{rate0,rate1,volume:0,price:0,remainder:c1-c0};
+ if(rate0===null||rate1===null)return{rate0,rate1,volume:0,price:c1-c0,remainder:0};
  const factor=factorBridge({q0,p0:rate0,q1,p1:rate1});
  return{rate0,rate1,volume:factor.volume,price:factor.price,remainder:c1-c0-factor.volume-factor.price};
 }
