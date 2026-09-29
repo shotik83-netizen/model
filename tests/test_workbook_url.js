@@ -2,6 +2,12 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const source=fs.readFileSync('src/app.js','utf8');
 const line=source.split('\n').find(s=>s.startsWith('async function readWorkbook('));
 assert(line,'Workbook reader is present');
+const urlLine=source.split('\n').find(s=>s.startsWith('function safeURL('));
+const urlContext={URL,location:{href:'https://sp.sibur.local/sites/ps250/Models/index.aspx'},state:{portalRootUrl:'https://sp.sibur.local/sites/ps250/Models/'}};
+vm.createContext(urlContext);vm.runInContext(urlLine+';this.safe=safeURL;',urlContext);
+assert.strictEqual(urlContext.safe('data/c1/ksg.xlsx').searchParams.get('download'),'1');
+assert.strictEqual(urlContext.safe('data/c1/ksg.xlsx?foo=bar&download=0').searchParams.toString(),'foo=bar&download=1');
+assert.strictEqual(urlContext.safe('https://example.com/ksg.xlsx').search,'');
 const context={TextDecoder,Uint8Array,unzip:async()=>{throw Error('ZIP_REACHED')},parseDelimited:(text,sep)=>[[text,sep]]};
 vm.createContext(context);vm.runInContext(line+';this.read=readWorkbook;',context);
 (async()=>{
